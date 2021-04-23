@@ -1,0 +1,27 @@
+.text-field{
+    -fx-background-color: transparent;
+    -fx-prompt-text-fill: rgba(191, 191, 191, 0.47);
+    -fx-text-fill: white;
+}
+
+.label{
+    -fx-text-fill: white;
+}
+
+.button{
+    -fx-background-color: rgba(0, 0, 0, 0);
+    -fx-border-color: white;
+    -fx-text-fill: white;
+    -fx-border-radius: 10;
+}
+
+.button:hover {
+    -fx-background-color: rgba(0, 0, 0, 0);
+    -fx-border-color: #6e6e6e;
+    -fx-text-fill: white;
+    -fx-border-radius: 10;
+}
+
+.root{
+    -fx-background-color: #373737;
+}

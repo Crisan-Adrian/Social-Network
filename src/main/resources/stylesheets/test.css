@@ -1,0 +1,59 @@
+.root{
+    -fx-background-color: #163862;
+}
+
+#loginButton{
+    -fx-background-color: transparent;
+    -fx-border-color: white;
+    -fx-text-fill: #dcdcdc;
+    -fx-border-radius: 10 10 10 10;
+}
+
+#loginButton:hover{
+    -fx-background-color: transparent;
+    -fx-border-color: #8fb5cc;
+    -fx-highlight-text-fill: #dadada;
+    -fx-border-radius: 10 10 10 10;
+}
+
+.label{
+    -fx-text-fill: #cbcbcb;
+}
+
+.text-field{
+    -jfx-label-float: true;
+    -fx-background-color: transparent;
+    -fx-prompt-text-fill: #aeaeae;
+    -fx-text-fill: #cbcbcb;
+    -fx-border-radius: 10 10 10 10;
+}
+
+#shadow{
+    -fx-background-color: #163862;
+    -fx-effect: dropshadow(gaussian, rgb(36, 36, 36), 10, 0.1, 0, 5);
+}
+
+.split-pane:horizontal > .split-pane-divider {
+    -fx-background-color: transparent;
+}
+
+#img{
+    -fx-effect: dropshadow(gaussian, rgb(36, 36, 36), 10, 0.1, 0, 5);
+}
+
+.split-pane{
+    -fx-background-color: #373737;
+}
+
+.split-pane:horizontal > * > .split-pane-divider {
+    -fx-border-color:  transparent;
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+}
+
+.Title {
+    -fx-text-fill: white;
+    -fx-font-size: 24;
+    -fx-font-weight: bold;
+    -fx-font-smoothing-type: gray;
+}

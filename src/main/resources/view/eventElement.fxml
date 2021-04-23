@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.*?>
+<AnchorPane prefHeight="35.0" prefWidth="338.0" xmlns="http://javafx.com/javafx/11.0.1"
+            xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.EventController"
+            stylesheets="/stylesheets/elements.css">
+    <Button fx:id="sub" layoutX="168.0" layoutY="4.0" mnemonicParsing="false" onAction="#subscribe"
+            text="I'm going" AnchorPane.rightAnchor="10"/>
+    <Button fx:id="unsub" layoutX="168.0" layoutY="4.0" mnemonicParsing="false" onAction="#unsubscribe"
+            text="I'm not going" AnchorPane.rightAnchor="10"/>
+    <Label fx:id="eventName" layoutX="14.0" layoutY="22.0" text="Event Name" AnchorPane.leftAnchor="10"/>
+    <Button fx:id="button" layoutX="202.0" layoutY="4.0" mnemonicParsing="false" onAction="#changeState" text="🔔"
+            AnchorPane.rightAnchor="110.0"/>
+</AnchorPane>

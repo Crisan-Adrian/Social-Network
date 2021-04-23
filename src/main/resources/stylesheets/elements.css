@@ -1,0 +1,18 @@
+.button{
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-border-color: white;
+    -fx-border-radius: 10;
+}
+
+.text {
+    -fx-text-fill: #dbdbdb;
+}
+
+.label{
+    -fx-text-fill: #dbdbdb;
+}
+
+.root{
+    -fx-background-color: transparent;
+}

@@ -1,0 +1,182 @@
+.root{
+    -fx-background-color: #373737;
+}
+
+.label{
+    -fx-text-fill: #dbdbdb;
+}
+
+.split-pane:horizontal > .split-pane-divider {
+    -fx-background-color: transparent;
+}
+
+.split-pane{
+
+    -fx-background-color: #373737;
+}
+
+.text {
+    -fx-text-fill: #dbdbdb;
+}
+
+.button{
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-border-color: white;
+    -fx-border-radius: 10;
+}
+
+.button:hover{
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-border-color: #727272;
+    -fx-border-radius: 10;
+}
+
+.split-pane{
+    -fx-background-color: #373737;
+}
+
+.accordion{
+    -fx-background-color: #373737;
+    -fx-animated: true;
+}
+
+.anchor-pane{
+    -fx-background-color: #373737;
+}
+
+.accordion .titled-pane .title {
+    -fx-background-color: transparent ;
+}
+
+.accordion .titled-pane .title .label {
+    -fx-text-fill: white;
+}
+
+.accordion .titled-pane .title .text {
+    -fx-text-fill: white;
+}
+
+.titled-pane
+{
+    -fx-text-fill: white;
+}
+
+.titled-pane > .title > .arrow-button > .arrow
+{
+    -fx-background-color: transparent, white;
+    -fx-background-insets: 1 0 -1 0, 0;
+    -fx-padding: 0.25em 0.3125em 0.25em 0.3125em;
+    -fx-shape: "M 0 0 h 7 l -3.5 4 z";
+}
+
+.tab-pane >.tab-header-area >.tab-header-background {
+    -fx-background-color: #373737;
+}
+
+.tab-pane > .tab-header-area > .headers-region {
+    -fx-background-color: #373737;
+}
+
+.tab :selected
+{
+    -fx-background-color: #ffffff, #373737;
+    -fx-background-insets: 1 2 0 2, 2 3 0 3;
+    -fx-background-radius: 5 5 0 0, 5 5 0 0;
+    -fx-border-radius: 5 5 0 0;
+    -fx-border-insets: 0;
+    -fx-border-color: #ffffff;
+}
+
+.tab
+{
+    -fx-background-color: #727272, #373737;
+    -fx-background-insets: 1 2 0 2, 2 3 0 3;
+    -fx-background-radius: 5 5 0 0, 5 5 0 0;
+    -fx-border-radius: 5 5 0 0;
+    -fx-border-insets: 1 2 0 2;
+    -fx-border-color: #727272;
+}
+
+.tab .tab-label{
+    -fx-background-color: #373737;
+    -fx-text-fill: white;
+}
+
+.tab:selected .focus-indicator {
+    -fx-border-color: white;
+    -fx-border-radius: 5 5 0 0;
+    -fx-border-insets: -6 -7 -7 -7;
+}
+
+.tab .focus-indicator{
+    -fx-border-color: transparent;
+}
+
+.myLabel {
+    -fx-text-fill: #dbdbdb;
+    -fx-font-weight: bold;
+    -fx-font-size: 17;
+}
+
+.myLabel :focused {
+    -fx-text-fill: #dbdbdb;
+    -fx-font-weight: bold;
+}
+
+.text-field {
+    -fx-text-fill: white;
+    -fx-background-color: white, #373737;
+    -fx-background-insets: 0, -1 -1 1 -1;
+}
+
+.text-field:focused {
+    -fx-text-fill: white;
+    -fx-background-color: white, #373737;
+    -fx-background-insets: -1, 0 0 1 0;
+}
+
+.scroll-pane{
+    -fx-background-color: #373737;
+}
+
+.vbox{
+    -fx-background-color: #373737;
+}
+
+.scroll-bar:horizontal, .scroll-bar:vertical{
+    -fx-background-color:transparent;
+}
+
+.scroll-bar:horizontal .thumb,
+.scroll-bar:vertical .thumb {
+    -fx-background-color: #868686;
+    -fx-background-radius: 5em;
+}
+
+.myClass {
+    -fx-padding: -1 -1 -1 -1 ;
+    -fx-animated: true;
+}
+
+.myClass:collapsed{
+    -fx-animated: true;
+    -fx-padding: 0;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: #373737;
+}
+
+.check-box > .box {
+    -fx-background-color: transparent;
+    -fx-border-color: white;
+    -fx-text-fill: white;
+    -fx-border-radius: 5;
+}
+
+.check-box:selected > .box > .mark,
+.check-box:indeterminate  > .box > .mark {
+    -fx-background-color: #ffffff;
+}
