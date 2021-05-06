@@ -54,24 +54,28 @@ public class MessageService {
         messages.sort(new SortByTime());
 
         for (Message message : messages) {
-            List<Long> messageMembers = new LinkedList<>();
-            messageMembers.add(message.getFrom());
-            messageMembers.addAll(message.getTo());
-
-            boolean sameConv = true;
-            for (Long member : members) {
-                if (!messageMembers.contains(member))
-                    sameConv = false;
-            }
-            if (members.size() != messageMembers.size())
-                sameConv = false;
-            if (sameConv) {
+            if (isSameConversation(message, members)) {
                 conversation.add(/*message.getId() + " - " + */message.getFrom() + " - " + message.getMessage() + " - "
                         + DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).format(message.getTimestamp()));
             }
         }
 
         return conversation;
+    }
+
+    private boolean isSameConversation(Message message, List<Long> members) {
+        List<Long> messageMembers = new LinkedList<>();
+        messageMembers.add(message.getFrom());
+        messageMembers.addAll(message.getTo());
+
+        boolean sameConv = true;
+        for (Long member : members) {
+            if (!messageMembers.contains(member))
+                sameConv = false;
+        }
+        if (members.size() != messageMembers.size())
+            sameConv = false;
+        return sameConv;
     }
 
     public List<Message> getUsersConversationsM(List<Long> members) {
@@ -87,18 +91,7 @@ public class MessageService {
         messages.sort(new SortByTime());
 
         for (Message message : messages) {
-            List<Long> messageMembers = new LinkedList<>();
-            messageMembers.add(message.getFrom());
-            messageMembers.addAll(message.getTo());
-
-            boolean sameConv = true;
-            for (Long member : members) {
-                if (!messageMembers.contains(member))
-                    sameConv = false;
-            }
-            if (members.size() != messageMembers.size())
-                sameConv = false;
-            if (sameConv) {
+            if (isSameConversation(message, members)) {
                 conversation.add(message);
             }
         }
@@ -111,19 +104,23 @@ public class MessageService {
         List<Message> messages = (List<Message>) repoMessage.findAll();
 
         for (Message message : messages) {
-            boolean foundGroup = false;
             List<Long> members = message.getTo();
             members.add(message.getFrom());
-            for (List<Long> group : groups) {
-                if (members.size() == group.size() && group.containsAll(members)) {
-                    foundGroup = true;
-                }
-            }
-            if (!foundGroup && members.size() > 2) {
+            if (!foundGroup(groups, members) && members.size() > 2) {
                 groups.add(members);
             }
         }
 
         return groups;
+    }
+
+    private boolean foundGroup(List<List<Long>> groups, List<Long> members) {
+        boolean foundGroup = false;
+        for (List<Long> group : groups) {
+            if (members.size() == group.size() && group.containsAll(members)) {
+                foundGroup = true;
+            }
+        }
+        return foundGroup;
     }
 }

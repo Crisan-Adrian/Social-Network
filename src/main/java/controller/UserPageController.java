@@ -83,8 +83,6 @@ public class UserPageController extends Observer {
     private UserService userService;
     private FriendshipService friendshipService;
     private MessageService messageService;
-    private UserDB repo;
-    private EventDB eventRepo;
     private Map<FriendRequestReceiverElementController, AnchorPane> requestMap;
     private Map<FriendRequestSenderElementController, AnchorPane> requestSentMap;
     private Map<FriendElementController, AnchorPane> friendMap;
@@ -132,12 +130,10 @@ public class UserPageController extends Observer {
         userGreeting.setText("Hello, " + currentUser.getFirstName() + " " + currentUser.getLastName() + "!");
     }
 
-    public void setServices(UserService userService, FriendshipService friendshipService, MessageService messageService, EventDB eventRepo) {
+    public void setServices(UserService userService, FriendshipService friendshipService, MessageService messageService) {
         this.userService = userService;
         this.friendshipService = friendshipService;
         this.messageService = messageService;
-        repo = userService.getRepo();
-        this.eventRepo = eventRepo;
     }
 
     public void initialLoad() {

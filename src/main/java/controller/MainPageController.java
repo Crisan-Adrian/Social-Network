@@ -39,7 +39,7 @@ public class MainPageController {
     private UserService userService;
     private FriendshipService friendshipService;
     private MessageService messageService;
-    private EventDB eventRepo;
+    private IEventRepository eventRepo;
 
 
     @FXML
@@ -91,7 +91,7 @@ public class MainPageController {
         } else {
             Tuple<String, String> hashed = Hasher.encodePassword(signupPassword.getText());
             User user = new User(signupFirstName.getText(), signupLastName.getText(), signupEmail.getText(), hashed.getRight(), hashed.getLeft());
-            user.setID(userService.getNextID());
+//            user.setID(userService.getNextID());
             if(userService.addUtilizator(user) == null)
             {
                 enterAccount(user);
@@ -117,7 +117,7 @@ public class MainPageController {
 
             UserPageController userPageController = loader.getController();
             userPageController.setUser(user);
-            userPageController.setServices(userService, friendshipService, messageService, eventRepo);
+            userPageController.setServices(userService, friendshipService, messageService);
             userPageController.initialLoad();
 
 
