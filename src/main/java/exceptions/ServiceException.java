@@ -1,8 +1,9 @@
 package exceptions;
 
+/**
+ * Exception class used by business layer
+ */
 public class ServiceException extends RuntimeException{
-
-    //TODO: Comment code where necessary. Document functions. Refactor if needed
 
     public ServiceException(String message)
     {

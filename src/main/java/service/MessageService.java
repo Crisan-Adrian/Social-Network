@@ -10,9 +10,9 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class MessageService {
+public class MessageService implements IMessageService {
 
-    //TODO: Comment code where necessary. Document functions. Refactor if needed
+    //TODO: Comment code where necessary. Migrate functions doc to interface. Refactor if needed
 
     IRepository<Long, Message> repoMessage;
 
@@ -20,16 +20,19 @@ public class MessageService {
         this.repoMessage = repoMessage;
     }
 
+    @Override
     public Message sendMessage(Long from, List<Long> to, String messageText, LocalDateTime timestamp) {
         return sendMessage(from, to, messageText, timestamp, null);
     }
 
+    @Override
     public Message sendMessage(Long from, List<Long> to, String messageText, LocalDateTime timestamp, Long repliesTo) {
         Message message = new Message(from, to, messageText, timestamp, repliesTo);
 
         return repoMessage.save(message);
     }
 
+    @Override
     public List<Message> getUserMessages(Long user) {
         List<Message> messages = new LinkedList<>();
 
@@ -41,6 +44,7 @@ public class MessageService {
         return messages;
     }
 
+    @Override
     public List<String> getUsersConversations(List<Long> members) {
         List<Message> messages = (List<Message>) repoMessage.findAll();
         List<String> conversation = new LinkedList<>();
@@ -78,6 +82,7 @@ public class MessageService {
         return sameConv;
     }
 
+    @Override
     public List<Message> getUsersConversationsM(List<Long> members) {
         List<Message> messages = (List<Message>) repoMessage.findAll();
         List<Message> conversation = new LinkedList<>();
@@ -99,6 +104,7 @@ public class MessageService {
         return conversation;
     }
 
+    @Override
     public List<List<Long>> getGroups(Long id) {
         List<List<Long>> groups = new LinkedList<>();
         List<Message> messages = (List<Message>) repoMessage.findAll();

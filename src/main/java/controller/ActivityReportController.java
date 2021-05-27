@@ -71,7 +71,7 @@ public class ActivityReportController {
                 if (m.getTimestamp().toLocalDate().equals(current)) {
                     messagesRecv++;
                     toRemove.add(m);
-                    log += m.getTimestamp().toLocalDate().toString() + " - Recieved: " + m.getMessage().replace("\n", "") + " from " + userService.getOne(m.getFrom()).getLastName() + " " + userService.getOne(m.getFrom()).getFirstName() + "\n";
+                    log += m.getTimestamp().toLocalDate().toString() + " - Recieved: " + m.getMessage().replace("\n", "") + " from " + userService.GetOne(m.getFrom()).getLastName() + " " + userService.GetOne(m.getFrom()).getFirstName() + "\n";
                 }
             }
             List<FriendshipDTO> toRemoveF = new LinkedList<>();
@@ -80,7 +80,7 @@ public class ActivityReportController {
                 if (f.getFriendedDate().equals(current)) {
                     friendsMade++;
                     toRemoveF.add(f);
-                    log += f.getFriendedDate().toString() + " - Friended: " + userService.getOne(f.getFriend()).getLastName() + " " + userService.getOne(f.getFriend()).getFirstName() + "\n";
+                    log += f.getFriendedDate().toString() + " - Friended: " + userService.GetOne(f.getFriend()).getLastName() + " " + userService.GetOne(f.getFriend()).getFirstName() + "\n";
                 }
             }
             // Data added to charts and messages and friendships removed from search lists

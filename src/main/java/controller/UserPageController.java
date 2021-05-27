@@ -15,8 +15,6 @@ import javafx.util.Pair;
 import domain.FriendshipDTO;
 import domain.User;
 import domain.UserEvent;
-import repository.event.EventDB;
-import repository.user.UserDB;
 import service.FriendshipService;
 import service.MessageService;
 import service.UserService;
@@ -30,7 +28,7 @@ import util.Observer;
 
 public class UserPageController extends Observer {
 
-    //TODO: Comment code where necessary. Document functions. Refactor if needed
+    //TODO: Comment code where necessary. Document functions. Refactor if needed. Remove repo calls from controller
 
 
     @FXML
@@ -170,7 +168,7 @@ public class UserPageController extends Observer {
                 FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/view/friendRequestReceiverElement.fxml"));
                 AnchorPane friendRequest = fxmlLoader.load();
                 FriendRequestReceiverElementController elementController = fxmlLoader.getController();
-                User from = userService.getOne(fromID);
+                User from = userService.GetOne(fromID);
                 elementController.setup(currentUser, from, friendshipService);
                 friendRequest.setLayoutX(10);
                 friendRequest.setLayoutY(10 + 30 * i);
@@ -195,7 +193,7 @@ public class UserPageController extends Observer {
                 FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/view/friendRequestSenderElement.fxml"));
                 AnchorPane friendRequest = fxmlLoader.load();
                 FriendRequestSenderElementController elementController = fxmlLoader.getController();
-                User to = userService.getOne(toID);
+                User to = userService.GetOne(toID);
                 elementController.setup(currentUser, to, friendshipService);
                 friendRequest.setLayoutX(10);
                 friendRequest.setLayoutY(10 + 30 * i);
@@ -220,7 +218,7 @@ public class UserPageController extends Observer {
                 FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/view/friendElement.fxml"));
                 AnchorPane friend = fxmlLoader.load();
                 FriendElementController elementController = fxmlLoader.getController();
-                User from = userService.getOne(friendshipDTO.getFriend());
+                User from = userService.GetOne(friendshipDTO.getFriend());
                 elementController.setup(currentUser, from, friendshipService, messageService, userService);
 
                 friendMap.put(elementController, friend);
@@ -502,7 +500,7 @@ public class UserPageController extends Observer {
 
         friend.setPromptText("Friend...");
         for (FriendshipDTO f : friendshipService.getUserFriendList(currentUser.getID())) {
-            friend.getItems().add(userService.getOne(f.getFriend()).getEmail());
+            friend.getItems().add(userService.GetOne(f.getFriend()).getEmail());
         }
 
         grid.add(new Label("Start:"), 0, 0);
@@ -547,7 +545,7 @@ public class UserPageController extends Observer {
         if (result.isPresent()) {
             start = result.get().e1;
             end = result.get().e2;
-            friendTarget = userService.findUserEmail(result.get().e3);
+            friendTarget = userService.FindUserByEmail(result.get().e3);
 
             System.out.println(friendTarget.getEmail());
 

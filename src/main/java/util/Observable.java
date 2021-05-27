@@ -5,8 +5,6 @@ import java.util.List;
 
 public abstract class Observable {
 
-    //TODO: Comment code where necessary. Document functions. Refactor if needed
-
     private List<Observer> observers;
 
     public Observable() {
@@ -31,7 +29,7 @@ public abstract class Observable {
 
     public void removeObserver(Observer o)
     {
-        if(o!= null && observers.contains(o))
+        if(o!= null)
         {
             observers.remove(o);
         }

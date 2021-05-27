@@ -18,7 +18,6 @@ public class EventController extends Observable {
     UserEvent event;
     User currentUser;
     boolean state;
-    IEventRepository repo;
 
     public void setUp(UserEvent e, User u, IEventRepository repo) {
         event = e;

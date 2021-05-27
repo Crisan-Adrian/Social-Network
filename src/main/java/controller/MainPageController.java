@@ -8,7 +8,6 @@ import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import domain.Tuple;
 import domain.User;
-import repository.event.EventDB;
 import repository.event.IEventRepository;
 import service.FriendshipService;
 import service.MessageService;
@@ -39,7 +38,6 @@ public class MainPageController {
     private UserService userService;
     private FriendshipService friendshipService;
     private MessageService messageService;
-    private IEventRepository eventRepo;
 
 
     @FXML
@@ -66,7 +64,7 @@ public class MainPageController {
 
             alert.showAndWait();
         } else {
-            User loginUser = userService.findUserEmail(userEmail.getText());
+            User loginUser = userService.FindUserByEmail(userEmail.getText());
             if (loginUser != null) {
                 if (Hasher.encodePassword(password.getText(), loginUser.getSalt()).equals(loginUser.getPassword())) {
                     enterAccount(loginUser);
@@ -92,7 +90,7 @@ public class MainPageController {
             Tuple<String, String> hashed = Hasher.encodePassword(signupPassword.getText());
             User user = new User(signupFirstName.getText(), signupLastName.getText(), signupEmail.getText(), hashed.getRight(), hashed.getLeft());
 //            user.setID(userService.getNextID());
-            if(userService.addUtilizator(user) == null)
+            if(userService.AddUser(user) == null)
             {
                 enterAccount(user);
             }

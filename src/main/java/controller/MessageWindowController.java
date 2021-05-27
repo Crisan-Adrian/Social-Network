@@ -75,7 +75,7 @@ public class MessageWindowController {
     }
 
     private void addMessage(Message message) {
-        User sender = userService.getOne(message.getFrom());
+        User sender = userService.GetOne(message.getFrom());
         messageBox.getChildren().add(new Label(sender.getFirstName() + " " + sender.getLastName() + " - " + message.getMessage()));
     }
 }

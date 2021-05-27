@@ -1,8 +1,6 @@
 package exceptions;
 
-public class UnknownUserException extends RuntimeException {
-
-    //TODO: Comment code where necessary. Document functions. Refactor if needed
+public class UnknownUserException extends Exception {
 
     public UnknownUserException(String message) {
         super(message);

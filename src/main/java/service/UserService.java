@@ -7,9 +7,7 @@ import repository.user.IUserRepository;
 import java.util.LinkedList;
 import java.util.List;
 
-public class UserService {
-
-    //TODO: Comment code where necessary. Document functions. Refactor if needed
+public class UserService implements IUserService {
 
     private final IUserRepository repo;
 
@@ -17,89 +15,73 @@ public class UserService {
         this.repo = repo;
     }
 
-    /**
-     * Adds a user
-     *
-     * @param user the user to add
-     * @return {@code null} if the user was saved
-     * the user otherwise (the user ID is already registered)
-     */
-    public User addUtilizator(User user) {
+    @Override
+    public User AddUser(User user) {
         return repo.save(user);
     }
 
-    /**
-     * Deletes a user
-     *
-     * @param id the user ID to delete
-     * @return the user if he was deleted
-     * {@code null} otherwise
-     */
-    public User deleteUtilizator(Long id) {
+    @Override
+    public User DeleteUser(Long id) {
         return repo.delete(id);
     }
 
-    /**
-     * Returns the user names registered with the given ids
-     *
-     * @param ids the user IDs
-     * @return the user names
-     * @throws UnknownUserException if a user ID is not registered
-     */
-    public Iterable<String> getUserNames(Iterable<Long> ids) {
+    @Override
+    public Iterable<String> GetUserNames(Iterable<Long> ids) throws UnknownUserException {
+        String unknownIDs = "";
         List<String> names = new LinkedList<>();
         for (Long id : ids) {
             User user = repo.findOne(id);
             if (user == null) {
-                throw new UnknownUserException("User ID does not exist");
+                unknownIDs = id + " ";
+            } else {
+                names.add(user.getFirstName() + " " + user.getLastName());
             }
-            names.add(user.getFirstName() + " " + user.getLastName());
+        }
+        if (!unknownIDs.equals("")) {
+            throw new UnknownUserException("The following User IDs do not exist: " + unknownIDs);
         }
         return names;
     }
 
-
-    public List<User> getUsers(List<Long> userIDs) {
+    @Override
+    public List<User> GetUsers(List<Long> userIDs) throws UnknownUserException {
+        String unknownIDs = "";
         List<User> users = new LinkedList<>();
         for (Long userID : userIDs) {
             User user = repo.findOne(userID);
             if (user == null) {
-                throw new UnknownUserException("User ID does not exist");
+                unknownIDs = userID + " ";
+            } else {
+                users.add(user);
             }
-            users.add(user);
+        }
+        if (!unknownIDs.equals("")) {
+            throw new UnknownUserException("User ID does not exist");
         }
         return users;
     }
 
-    /**
-     * Gets the user with the given ID
-     *
-     * @param id the user ID
-     * @return the requested user
-     * {@code null} if the user does not exist
-     */
-    public User getOne(Long id) {
+    @Override
+    public User GetOne(Long id) {
         return repo.findOne(id);
     }
 
-    /**
-     * Gets all registered users
-     *
-     * @return all registered users
-     */
-    public Iterable<User> getAll() {
+    @Override
+    public Iterable<User> GetAllUsers() {
         return repo.findAll();
     }
 
-    public User findUserEmail(String email) {
+    @Override
+    public User FindUserByEmail(String email) {
         List<User> page = repo.getFirstPage();
-        do{
+        do {
             for (User u : page) {
-                if (u.getEmail().equals(email))
+                if (u.getEmail().equals(email)) {
                     return u;
+                }
             }
             page = repo.getNextPage();
-        }while (repo.hasNextPage());
+        } while (repo.hasNextPage());
         return null;
     }
 }
