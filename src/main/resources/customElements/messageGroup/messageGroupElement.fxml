@@ -5,10 +5,10 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Text?>
 
-<AnchorPane prefHeight="49.0" prefWidth="286.0" xmlns="http://javafx.com/javafx/11.0.1"
-            xmlns:fx="http://javafx.com/fxml/1" fx:controller="controller.MessageGroupController">
+<fx:root type="javafx.scene.layout.AnchorPane" prefHeight="49.0" prefWidth="286.0" xmlns="http://javafx.com/javafx/11.0.1"
+            xmlns:fx="http://javafx.com/fxml/1">
     <Text fx:id="from" layoutX="14.0" layoutY="29.0" strokeType="OUTSIDE" strokeWidth="0.0" text="User Name (email)"
           wrappingWidth="100.53662109375" AnchorPane.leftAnchor="10"/>
     <Button fx:id="message" layoutX="146.0" layoutY="12.0" mnemonicParsing="false" onAction="#message" text="Message"
             AnchorPane.rightAnchor="10"/>
-</AnchorPane>
+</fx:root>
