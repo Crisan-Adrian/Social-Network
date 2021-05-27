@@ -1,5 +1,6 @@
 package controller;
 
+import domain.User;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -10,16 +11,17 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-import domain.User;
 import service.FriendshipService;
 import service.MessageService;
 import service.UserService;
 import util.Observable;
+import util.Observer;
+import util.ObserverManager;
 
 import java.io.IOException;
 import java.util.Optional;
 
-public class FriendElementController extends Observable {
+public class FriendElement extends AnchorPane implements Observable {
 
     //TODO: Comment code where necessary. Document functions. Refactor if needed
 
@@ -31,10 +33,25 @@ public class FriendElementController extends Observable {
     Boolean openedMessageWindow;
     Stage messageWindow;
 
+    private final ObserverManager manager = new ObserverManager();
+
     @FXML
-    Label from;
+    private Label from;
     @FXML
     private CheckBox check;
+
+    public FriendElement() {
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource(
+                "/customElements/friend/friendElement.fxml"));
+        fxmlLoader.setRoot(this);
+        fxmlLoader.setController(this);
+
+        try {
+            fxmlLoader.load();
+        } catch (IOException exception) {
+            throw new RuntimeException(exception);
+        }
+    }
 
     public void setup(User currentUser, User friendUser, FriendshipService friendshipService, MessageService messageService, UserService userService) {
         this.user = currentUser;
@@ -51,7 +68,8 @@ public class FriendElementController extends Observable {
         from.setText(friendUser.getFirstName() + " " + friendUser.getLastName());
     }
 
-    public void delete() {
+    @FXML
+    protected void delete() {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Confirmation Delete");
         alert.setContentText("Do you want to delete friend?");
@@ -59,11 +77,13 @@ public class FriendElementController extends Observable {
         Optional<ButtonType> result = alert.showAndWait();
         if (((Optional<?>) result).get() == ButtonType.OK) {
             service.deleteFriendship(user.getID(), friendUser.getID());
-            notifyObservers();
+            NotifyObservers();
         }
     }
 
-    public void message() throws IOException {
+    @FXML
+    protected void message() throws IOException {
+        System.out.println("Check");
         if (!openedMessageWindow) {
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(getClass().getResource("/view/messageWindowView.fxml"));
@@ -95,19 +115,32 @@ public class FriendElementController extends Observable {
         }
     }
 
-    public void closedMessageWindow(WindowEvent event) {
+    private void closedMessageWindow(WindowEvent event) {
         openedMessageWindow = false;
         messageWindow = null;
         System.out.println("Closed!");
     }
 
-    public void setCheckVisible(boolean b)
-    {
+    public void setCheckVisible(boolean b) {
         check.setVisible(b);
     }
 
-    public boolean getCheck()
-    {
+    public boolean getCheck() {
         return check.isSelected();
+    }
+
+    public void NotifyObservers()
+    {
+        manager.NotifyObservers(this);
+    }
+
+    public void AddObserver(Observer o)
+    {
+        manager.AddObserver(o);
+    }
+
+    public void RemoveObserver(Observer o)
+    {
+        manager.RemoveObserver(o);
     }
 }

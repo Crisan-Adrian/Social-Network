@@ -50,7 +50,7 @@ public class MainPageController {
         this.userService = userService;
         this.friendshipService = friendshipService;
         this.messageService = messageService;
-        this.eventRepo = eventRepo;
+//        this.eventRepo = eventRepo;
     }
 
 

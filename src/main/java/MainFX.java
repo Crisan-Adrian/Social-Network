@@ -1,3 +1,4 @@
+import controller.FriendElement;
 import controller.MainPageController;
 import domain.validators.*;
 import javafx.application.Application;

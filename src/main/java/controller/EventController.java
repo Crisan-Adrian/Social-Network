@@ -7,7 +7,7 @@ import domain.UserEvent;
 import repository.event.IEventRepository;
 import util.Observable;
 
-public class EventController extends Observable {
+public class EventController implements Observable {
 
     //TODO: Comment code where necessary. Document functions. Refactor if needed
 
@@ -22,7 +22,7 @@ public class EventController extends Observable {
     public void setUp(UserEvent e, User u, IEventRepository repo) {
         event = e;
         currentUser = u;
-        this.repo = repo;
+//        this.repo = repo;
         if (e.getAttending().get(u.getID()) == null) {
             state = false;
         } else {
@@ -53,7 +53,7 @@ public class EventController extends Observable {
         sub.setVisible(false);
         state = true;
         button.setVisible(true);
-        repo.update(event);
+//        repo.update(event);
     }
 
     public void unsubscribe() {
@@ -61,7 +61,7 @@ public class EventController extends Observable {
         unsub.setVisible(false);
         sub.setVisible(true);
         button.setVisible(false);
-        repo.update(event);
+//        repo.update(event);
     }
 
     public void changeState() {
@@ -75,6 +75,6 @@ public class EventController extends Observable {
             button.setText("\uD83D\uDD15");
             event.unsubscribe(currentUser.getID());
         }
-        repo.update(event);
+//        repo.update(event);
     }
 }

@@ -6,7 +6,7 @@ import domain.User;
 import service.FriendshipService;
 import util.Observable;
 
-public class FriendRequestReceiverElementController extends Observable {
+public class FriendRequestReceiverElementController implements Observable {
 
 
     //TODO: Comment code where necessary. Document functions. Refactor if needed
@@ -31,11 +31,11 @@ public class FriendRequestReceiverElementController extends Observable {
 
     public void reject() {
         service.answerFriendshipRequest(user.getID(), fromUser.getID(), FriendRequestStatus.REJECTED);
-        notifyObservers();
+        NotifyObservers();
     }
 
     public void accept() {
         service.answerFriendshipRequest(user.getID(), fromUser.getID(), FriendRequestStatus.ACCEPTED);
-        notifyObservers();
+        NotifyObservers();
     }
 }

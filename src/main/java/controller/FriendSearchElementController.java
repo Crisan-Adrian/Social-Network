@@ -7,7 +7,7 @@ import domain.User;
 import service.FriendshipService;
 import util.Observable;
 
-public class FriendSearchElementController extends Observable {
+public class FriendSearchElementController implements Observable {
 
     //TODO: Comment code where necessary. Document functions. Refactor if needed
 
@@ -36,7 +36,7 @@ public class FriendSearchElementController extends Observable {
 
     public void friend() {
         service.sendFriendshipRequest(user.getID(), searchUser.getID());
-        notifyObservers();
+        NotifyObservers();
     }
 
     public void hideButton()
