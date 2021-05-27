@@ -11,9 +11,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-import service.FriendshipService;
-import service.MessageService;
-import service.UserService;
+import service.*;
 import util.Observable;
 import util.Observer;
 import util.ObserverManager;
@@ -27,9 +25,9 @@ public class FriendElement extends AnchorPane implements Observable {
 
     User user;
     User friendUser;
-    FriendshipService service;
-    MessageService messageService;
-    UserService userService;
+    IFriendshipService service;
+    IMessageService messageService;
+    IUserService userService;
     Boolean openedMessageWindow;
     Stage messageWindow;
 
@@ -53,7 +51,7 @@ public class FriendElement extends AnchorPane implements Observable {
         }
     }
 
-    public void setup(User currentUser, User friendUser, FriendshipService friendshipService, MessageService messageService, UserService userService) {
+    public void setup(User currentUser, User friendUser, IFriendshipService friendshipService, IMessageService messageService, IUserService userService) {
         this.user = currentUser;
         this.friendUser = friendUser;
         this.service = friendshipService;

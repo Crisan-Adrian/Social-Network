@@ -1,17 +1,17 @@
 package controller;
 
+import domain.Tuple;
+import domain.User;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
-import domain.Tuple;
-import domain.User;
-import repository.event.IEventRepository;
-import service.FriendshipService;
-import service.MessageService;
-import service.UserService;
+import service.IEventService;
+import service.IFriendshipService;
+import service.IMessageService;
+import service.IUserService;
 import util.Hasher;
 
 import java.io.IOException;
@@ -35,9 +35,10 @@ public class MainPageController {
     @FXML
     PasswordField password;
 
-    private UserService userService;
-    private FriendshipService friendshipService;
-    private MessageService messageService;
+    private IUserService userService;
+    private IFriendshipService friendshipService;
+    private IMessageService messageService;
+    private IEventService eventService;
 
 
     @FXML
@@ -46,11 +47,11 @@ public class MainPageController {
         divider.positionProperty().addListener((observable, oldvalue, newvalue) -> divider.setPosition(0.5));
     }
 
-    public void setup(UserService userService, FriendshipService friendshipService, MessageService messageService) {
+    public void setup(IUserService userService, IFriendshipService friendshipService, IMessageService messageService, IEventService eventService) {
         this.userService = userService;
         this.friendshipService = friendshipService;
         this.messageService = messageService;
-//        this.eventRepo = eventRepo;
+        this.eventService = eventService;
     }
 
 
@@ -115,7 +116,7 @@ public class MainPageController {
 
             UserPageController userPageController = loader.getController();
             userPageController.setUser(user);
-            userPageController.setServices(userService, friendshipService, messageService);
+            userPageController.setServices(userService, friendshipService, messageService, eventService);
             userPageController.initialLoad();
 
 

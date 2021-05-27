@@ -2,11 +2,10 @@ package controller;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import domain.FriendRequestStatus;
 import domain.User;
 import javafx.scene.layout.AnchorPane;
-import service.FriendshipService;
 import service.IFriendshipService;
 import util.Observable;
 import util.Observer;
@@ -14,19 +13,22 @@ import util.ObserverManager;
 
 import java.io.IOException;
 
-public class FriendRequestReceived extends AnchorPane implements Observable {
+public class FriendSearchElement extends AnchorPane implements Observable {
+
     //TODO: Comment code where necessary. Document functions. Refactor if needed
 
-    public Label from;
+
+    public Label searchedUser;
+    public Button button;
     User user;
-    User fromUser;
+    User searchUser;
     IFriendshipService service;
 
     private final ObserverManager manager = new ObserverManager();
 
-    public FriendRequestReceived() {
+    public FriendSearchElement() {
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource(
-                "/customElements/friendRequestReceived/friendRequestReceivedElement.fxml"));
+                "/customElements/friendSearch/friendSearchElement.fxml"));
         fxmlLoader.setRoot(this);
         fxmlLoader.setController(this);
 
@@ -37,30 +39,28 @@ public class FriendRequestReceived extends AnchorPane implements Observable {
         }
     }
 
-    public void setup(User currentUser, User from, IFriendshipService friendshipService) {
+    public void setup(User currentUser, User friendUser, IFriendshipService friendshipService) {
         this.user = currentUser;
-        this.fromUser = from;
+        this.searchUser = friendUser;
         this.service = friendshipService;
 
         loadElement();
     }
 
     private void loadElement() {
-        from.setText(fromUser.getFirstName() + " " + fromUser.getLastName() + " \n(" + fromUser.getEmail() + ")");
+        searchedUser.setText(searchUser.getFirstName() + " " + searchUser.getLastName() + " (" + searchUser.getEmail() + ")");
     }
 
     @FXML
-    protected void reject() {
-        service.answerFriendshipRequest(user.getID(), fromUser.getID(), FriendRequestStatus.REJECTED);
+    protected void friend() {
+        service.sendFriendshipRequest(user.getID(), searchUser.getID());
         NotifyObservers();
     }
 
-    @FXML
-    protected void accept() {
-        service.answerFriendshipRequest(user.getID(), fromUser.getID(), FriendRequestStatus.ACCEPTED);
-        NotifyObservers();
+    public void hideButton()
+    {
+        button.setVisible(false);
     }
-
 
     public void NotifyObservers()
     {

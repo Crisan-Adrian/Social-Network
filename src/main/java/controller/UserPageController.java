@@ -1,5 +1,8 @@
 package controller;
 
+import domain.FriendshipDTO;
+import domain.User;
+import domain.UserEvent;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -12,19 +15,17 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Pair;
-import domain.FriendshipDTO;
-import domain.User;
-import domain.UserEvent;
-import service.FriendshipService;
-import service.MessageService;
-import service.UserService;
+import service.*;
+import util.Observable;
+import util.Observer;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
-import util.Observable;
-import util.Observer;
 
 public class UserPageController extends Observer {
 
@@ -78,13 +79,12 @@ public class UserPageController extends Observer {
 
 
     private User currentUser;
-    private UserService userService;
-    private FriendshipService friendshipService;
-    private MessageService messageService;
-    private List<FriendRequestReceived> requestMap;
-    private List<FriendRequestSent> requestSentMap;
-    private List<FriendElement> friendMap;
-    private Map<Observable, AnchorPane> searchMap;
+    private IUserService userService;
+    private IFriendshipService friendshipService;
+    private IMessageService messageService;
+    private IEventService eventService;
+    private List<FriendElement> friendList;
+    private List<Observable> searchList;
 
     private List<Long> friendships;
     private List<Long> requestsR;
@@ -107,10 +107,8 @@ public class UserPageController extends Observer {
 
     @FXML
     public void initialize() {
-        friendMap = new ArrayList<>();
-        requestMap = new ArrayList<>();
-        searchMap = new HashMap<>();
-        requestSentMap = new ArrayList<>();
+        friendList = new ArrayList<>();
+        searchList = new ArrayList<>();
 
         // Force the field to be numeric only
         pageNumberSelector.setText("1");
@@ -128,17 +126,18 @@ public class UserPageController extends Observer {
         userGreeting.setText("Hello, " + currentUser.getFirstName() + " " + currentUser.getLastName() + "!");
     }
 
-    public void setServices(UserService userService, FriendshipService friendshipService, MessageService messageService) {
+    public void setServices(IUserService userService, IFriendshipService friendshipService, IMessageService messageService, IEventService eventService) {
         this.userService = userService;
         this.friendshipService = friendshipService;
         this.messageService = messageService;
+        this.eventService = eventService;
     }
 
     public void initialLoad() {
         loadReceivedRequests();
         loadFriends();
         loadSentRequests();
-        loadEvents(eventRepo.getFirstPage());
+//        loadEvents(eventRepo.getFirstPage());
         search();
 
         Platform.runLater(this::showNotifications);
@@ -152,7 +151,7 @@ public class UserPageController extends Observer {
             AnchorPane root = loader.load();
 
             MainPageController mainPageController = loader.getController();
-            mainPageController.setup(userService, friendshipService, messageService);
+            mainPageController.setup(userService, friendshipService, messageService, eventService);
 
             stage.setScene(new Scene(root, 800, 700));
         } catch (IOException ignored) {
@@ -160,7 +159,6 @@ public class UserPageController extends Observer {
     }
 
     public void loadReceivedRequests() {
-        requestMap.clear();
         requestsRecv.getChildren().clear();
         int i = 0;
         for (Long fromID : friendshipService.getUserFriendRequests(currentUser.getID())) {
@@ -171,7 +169,6 @@ public class UserPageController extends Observer {
                 friendRequest.setLayoutX(10);
                 friendRequest.setLayoutY(10 + 30 * i);
 
-                requestMap.add(friendRequest);
                 friendRequest.AddObserver(this);
 
                 requestsRecv.getChildren().add(friendRequest);
@@ -183,7 +180,6 @@ public class UserPageController extends Observer {
     }
 
     public void loadSentRequests() {
-        requestSentMap.clear();
         requestsSent.getChildren().clear();
         int i = 0;
         for (Long toID : friendshipService.getUserSentRequests(currentUser.getID())) {
@@ -194,7 +190,6 @@ public class UserPageController extends Observer {
                 friendRequest.setLayoutX(10);
                 friendRequest.setLayoutY(10 + 30 * i);
 
-                requestSentMap.add(friendRequest);
                 friendRequest.AddObserver(this);
 
                 requestsSent.getChildren().add(friendRequest);
@@ -208,14 +203,14 @@ public class UserPageController extends Observer {
 
     private void loadFriends() {
         friends.getChildren().clear();
-        friendMap.clear();
+        friendList.clear();
         for (FriendshipDTO friendshipDTO : friendshipService.getUserFriendList(currentUser.getID())) {
             try {
                 User from = userService.GetOne(friendshipDTO.getFriend());
                 FriendElement friendElement = new FriendElement();
                 friendElement.setup(currentUser, from, friendshipService, messageService, userService);
 
-                friendMap.add(friendElement);
+                friendList.add(friendElement);
                 friendElement.AddObserver(this);
 
                 friends.getChildren().add(friendElement);
@@ -229,21 +224,27 @@ public class UserPageController extends Observer {
     public void update(Observable o) {
         boolean found = false;
         if (o instanceof FriendRequestReceived) {
-            if (requestsRecv.getChildren().remove(requestMap.remove(o)))
+            if (requestsRecv.getChildren().remove(o)) {
                 found = true;
+            }
             loadFriends();
         }
         if (o instanceof FriendElement) {
-            if (friends.getChildren().remove(friendMap.remove(o)))
-                found = true;
+            if (friends.getChildren().remove(o)) {
+                friendList.remove(o);
+            }
+            found = true;
         }
         if (o instanceof FriendRequestSent) {
-            if (requestsSent.getChildren().remove(requestSentMap.remove(o)))
+            if (requestsSent.getChildren().remove(o)) {
                 found = true;
+            }
             loadSentRequests();
         }
         if (!found) {
-            searchMap.remove(o).setDisable(true);
+            if (o instanceof FriendSearchElement) {
+                ((FriendSearchElement) o).setDisable(true);
+            }
         }
         Platform.runLater(() -> {
             friendships = friendshipService.getUserFriendList(currentUser.getID()).stream().map(FriendshipDTO::getFriend).collect(Collectors.toList());
@@ -257,7 +258,7 @@ public class UserPageController extends Observer {
 
     public void loadPage(List<User> page) {
         searchResults.getChildren().clear();
-        searchMap.clear();
+        searchList.clear();
 
         if (page == null) {
             searchResults.getChildren().add(new Label("No results"));
@@ -269,53 +270,44 @@ public class UserPageController extends Observer {
 
                         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/customElements/friend/friendElement.fxml"));
                         AnchorPane friend = fxmlLoader.load();
-                        FriendElement elementController = fxmlLoader.getController();
-                        elementController.setup(currentUser, user, friendshipService, messageService, userService);
+                        FriendElement friendElement = new FriendElement();
+                        friendElement.setup(currentUser, user, friendshipService, messageService, userService);
 
-                        searchMap.put(elementController, friend);
-                        elementController.AddObserver(this);
+                        searchList.add(friendElement);
+                        friendElement.AddObserver(this);
 
                         searchResults.getChildren().add(friend);
                     } else if (requestsS.contains(user.getID())) {
                         // Load sent request element
+                        FriendRequestSent friendRequestSent = new FriendRequestSent()
+                        friendRequestSent.setup(currentUser, user, friendshipService);
 
-                        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/customElements/friendRequestSent/friendRequestSentElement.fxml"));
-                        AnchorPane friend = fxmlLoader.load();
-                        FriendRequestSent elementController = fxmlLoader.getController();
-                        elementController.setup(currentUser, user, friendshipService);
+                        searchList.add(friendRequestSent);
+                        friendRequestSent.AddObserver(this);
 
-                        searchMap.put(elementController, friend);
-                        elementController.AddObserver(this);
-
-                        searchResults.getChildren().add(friend);
+                        searchResults.getChildren().add(friendRequestSent);
                     } else if (requestsR.contains(user.getID())) {
                         // Load recv request element
+                        FriendRequestReceived friendRequestReceived = new FriendRequestReceived();
+                        friendRequestReceived.setup(currentUser, user, friendshipService);
 
-                        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/customElements/friendRequestReceived/friendRequestReceivedElement.fxml"));
-                        AnchorPane friend = fxmlLoader.load();
-                        FriendRequestReceived elementController = fxmlLoader.getController();
-                        elementController.setup(currentUser, user, friendshipService);
+                        searchList.add(friendRequestReceived);
+                        friendRequestReceived.AddObserver(this);
 
-                        searchMap.put(elementController, friend);
-                        elementController.AddObserver(this);
-
-                        searchResults.getChildren().add(friend);
+                        searchResults.getChildren().add(friendRequestReceived);
                     } else {
                         //Load search element
-                        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/view/friendSearchElement.fxml"));
-                        AnchorPane friend = fxmlLoader.load();
-                        FriendSearchElementController elementController = fxmlLoader.getController();
-                        elementController.setup(currentUser, user, friendshipService);
+                        FriendSearchElement friendSearchElement = new FriendSearchElement();
+                        friendSearchElement.setup(currentUser, user, friendshipService);
 
-                        if(user.getID().equals(currentUser.getID()))
-                        {
-                            elementController.hideButton();
+                        if (user.getID().equals(currentUser.getID())) {
+                            friendSearchElement.hideButton();
                         }
 
-                        searchMap.put(elementController, friend);
-                        elementController.AddObserver(this);
+                        searchList.add(friendSearchElement);
+                        friendSearchElement.AddObserver(this);
 
-                        searchResults.getChildren().add(friend);
+                        searchResults.getChildren().add(friendSearchElement);
                     }
                 }
 
@@ -338,7 +330,9 @@ public class UserPageController extends Observer {
 
         pageCounter.setText("/ " + repo.getPageCountM());
 
-        friendships = friendshipService.getUserFriendList(currentUser.getID()).stream().map(FriendshipDTO::getFriend).collect(Collectors.toList());
+        friendships = friendshipService.getUserFriendList(currentUser.getID()).stream()
+                .map(FriendshipDTO::getFriend).collect(Collectors.toList());
+
         requestsR = friendshipService.getUserFriendRequests(currentUser.getID());
         requestsS = friendshipService.getUserSentRequests(currentUser.getID());
 
@@ -373,7 +367,7 @@ public class UserPageController extends Observer {
 
     public void activateCheck() {
         friendsPane.setExpanded(true);
-        friendMap.keySet().forEach(k -> k.setCheckVisible(true));
+        friendList.keySet().forEach(k -> k.setCheckVisible(true));
         activateCheck.setVisible(false);
         createGroup.setVisible(true);
     }
@@ -381,10 +375,11 @@ public class UserPageController extends Observer {
     public void createGroup() {
         List<Long> members = new LinkedList<>();
         members.add(currentUser.getID());
-        friendMap.keySet().forEach(k -> {
+        friendList.keySet().forEach(k -> {
             k.setCheckVisible(false);
-            if (k.getCheck())
+            if (k.getCheck()) {
                 members.add(k.friendUser.getID());
+            }
         });
         if (members.size() > 2) {
             groups.getChildren().add(new Label(members.toString()));
@@ -581,9 +576,9 @@ public class UserPageController extends Observer {
 
     public void createEvent() {
         Dialog<Pair<String, LocalDate>> createEventDialog = new Dialog<>();
-        createEventDialog.setTitle("Create Event");
+        createEventDialog.setTitle("Create EventElement");
 
-        ButtonType createEvent = new ButtonType("Create Event", ButtonBar.ButtonData.OK_DONE);
+        ButtonType createEvent = new ButtonType("Create EventElement", ButtonBar.ButtonData.OK_DONE);
         createEventDialog.getDialogPane().getButtonTypes().addAll(createEvent, ButtonType.CANCEL);
 
         GridPane grid = new GridPane();
@@ -656,7 +651,7 @@ public class UserPageController extends Observer {
         for (UserEvent event : page) {
             if (event.getEventDate().compareTo(LocalDate.now()) >= 0) {
                 try {
-                    Event eventElement = new Event();
+                    EventElement eventElement = new EventElement();
                     eventElement.setUp(event, currentUser);
                     eventElement.AddObserver(this);
                     eventsBox.getChildren().add(eventElement);
@@ -694,8 +689,9 @@ public class UserPageController extends Observer {
             if (temp != null) {
                 for (UserEvent u : temp) {
                     if (LocalDate.now().plusDays(7).compareTo(u.getEventDate()) >= 0 && u.getAttending().get(currentUser.getID()) != null) {
-                        if(u.getAttending().get(currentUser.getID()))
+                        if (u.getAttending().get(currentUser.getID())) {
                             closeEvents.add(u);
+                        }
                     }
                 }
             }

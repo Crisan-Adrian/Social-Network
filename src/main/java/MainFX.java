@@ -1,4 +1,3 @@
-import controller.FriendElement;
 import controller.MainPageController;
 import domain.validators.*;
 import javafx.application.Application;
@@ -17,9 +16,7 @@ import repository.message.IMessageRepository;
 import repository.message.MessageDB;
 import repository.user.IUserRepository;
 import repository.user.UserDB;
-import service.FriendshipService;
-import service.MessageService;
-import service.UserService;
+import service.*;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -43,9 +40,10 @@ public class MainFX extends Application {
         IMessageRepository messageRepository = new MessageDB(new MessageValidator(), properties);
         IEventRepository eventRepository = new EventDB(new EventValidator(), properties, 10);
 
-        FriendshipService friendshipService = new FriendshipService(friendshipRepository, friendRequestRepository);
-        UserService userService = new UserService(userRepository);
-        MessageService messageService = new MessageService(messageRepository);
+        IFriendshipService friendshipService = new FriendshipService(friendshipRepository, friendRequestRepository);
+        IUserService userService = new UserService(userRepository);
+        IMessageService messageService = new MessageService(messageRepository);
+        IEventService eventService = new EventService(eventRepository);
 
         FXMLLoader loader = new FXMLLoader();
         loader.setLocation(getClass().getResource("/view/landingPageView.fxml"));
@@ -53,7 +51,7 @@ public class MainFX extends Application {
 
 
         MainPageController mainPageController = loader.getController();
-        mainPageController.setup(userService, friendshipService, messageService, eventRepository);
+        mainPageController.setup(userService, friendshipService, messageService, eventService);
 
         Scene scene = new Scene(root, 800, 700);
 

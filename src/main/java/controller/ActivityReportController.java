@@ -13,9 +13,7 @@ import javafx.scene.control.TextArea;
 import domain.FriendshipDTO;
 import domain.Message;
 import domain.User;
-import service.FriendshipService;
-import service.MessageService;
-import service.UserService;
+import service.*;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -31,9 +29,9 @@ public class ActivityReportController {
     @FXML
     private TextArea text;
 
-    private UserService userService;
-    private FriendshipService friendshipService;
-    private MessageService messageService;
+    private IUserService userService;
+    private IFriendshipService friendshipService;
+    private IMessageService messageService;
 
     private User currentUser;
     private LocalDate start;
@@ -128,7 +126,7 @@ public class ActivityReportController {
      * @param start start date of repost
      * @param end end date of report
      */
-    public void setup(MessageService messageService, UserService userService, FriendshipService friendshipService, User currentUser, LocalDate start, LocalDate end) {
+    public void setup(IMessageService messageService, IUserService userService, IFriendshipService friendshipService, User currentUser, LocalDate start, LocalDate end) {
         this.userService = userService;
         this.friendshipService = friendshipService;
         this.messageService = messageService;

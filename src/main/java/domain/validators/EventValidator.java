@@ -9,7 +9,7 @@ public class EventValidator implements Validator<UserEvent> {
     public void validate(UserEvent entity) throws ValidationException {
         if(entity.getName().length() < 5)
         {
-            throw new ValidationException("Event name too short");
+            throw new ValidationException("EventElement name too short");
         }
     }
 }

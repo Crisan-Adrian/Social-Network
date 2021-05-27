@@ -14,7 +14,7 @@ import util.ObserverManager;
 
 import java.io.IOException;
 
-public class Event extends AnchorPane implements Observable {
+public class EventElement extends AnchorPane implements Observable {
 
     //TODO: Comment code where necessary. Document functions. Refactor if needed
 
@@ -28,7 +28,7 @@ public class Event extends AnchorPane implements Observable {
 
     private final ObserverManager manager = new ObserverManager();
 
-    public Event() {
+    public EventElement() {
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource(
                 "/customElements/event/eventElement.fxml"));
         fxmlLoader.setRoot(this);

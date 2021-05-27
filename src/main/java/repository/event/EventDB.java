@@ -252,7 +252,7 @@ public class EventDB implements IEventRepository {
             }
         } catch (SQLException throwable) {
             //System.out.println(throwable.getMessage());
-            throw new RepoException("Event BD fail" + throwable.getMessage());
+            throw new RepoException("EventElement BD fail" + throwable.getMessage());
         }
         return entity;
     }

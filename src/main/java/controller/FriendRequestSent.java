@@ -6,6 +6,7 @@ import javafx.scene.control.Label;
 import domain.User;
 import javafx.scene.layout.AnchorPane;
 import service.FriendshipService;
+import service.IFriendshipService;
 import util.Observable;
 import util.Observer;
 import util.ObserverManager;
@@ -19,7 +20,7 @@ public class FriendRequestSent extends AnchorPane implements Observable {
     public Label to;
     User user;
     User toUser;
-    FriendshipService service;
+    IFriendshipService service;
 
     private final ObserverManager manager = new ObserverManager();
 
@@ -36,7 +37,7 @@ public class FriendRequestSent extends AnchorPane implements Observable {
         }
     }
 
-    public void setup(User currentUser, User to, FriendshipService friendshipService) {
+    public void setup(User currentUser, User to, IFriendshipService friendshipService) {
         this.user = currentUser;
         this.toUser = to;
         this.service = friendshipService;

@@ -11,9 +11,7 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.TextArea;
 import domain.Message;
 import domain.User;
-import service.FriendshipService;
-import service.MessageService;
-import service.UserService;
+import service.*;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -28,9 +26,9 @@ public class MessageReportController {
 
     public TextArea text;
     public BarChart chart;
-    private MessageService messageService;
-    private UserService userService;
-    private FriendshipService friendshipsService;
+    private IMessageService messageService;
+    private IUserService userService;
+    private IFriendshipService friendshipsService;
     private User currentUser;
     private User friend;
     private LocalDate start;
@@ -112,7 +110,7 @@ public class MessageReportController {
         log = "";
     }
 
-    public void setup(MessageService messageService, UserService userService, FriendshipService friendshipService, User currentUser, LocalDate start, LocalDate end, User friendTarget) {
+    public void setup(IMessageService messageService, IUserService userService, IFriendshipService friendshipService, User currentUser, LocalDate start, LocalDate end, User friendTarget) {
         this.messageService = messageService;
         this.userService = userService;
         this.friendshipsService = friendshipService;

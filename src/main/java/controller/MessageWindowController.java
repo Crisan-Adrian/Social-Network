@@ -9,6 +9,8 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.VBox;
 import domain.Message;
 import domain.User;
+import service.IMessageService;
+import service.IUserService;
 import service.MessageService;
 import service.UserService;
 
@@ -30,13 +32,13 @@ public class MessageWindowController {
     @FXML
     public Label user;
 
-    MessageService messageService;
-    UserService userService;
+    IMessageService messageService;
+    IUserService userService;
     private User friendUser;
     private User currentUser;
     List<Long> members;
 
-    public void setup(MessageService messageService, UserService userService, User currentUser, User friendUser) {
+    public void setup(IMessageService messageService, IUserService userService, User currentUser, User friendUser) {
         this.messageService = messageService;
         this.userService = userService;
         this.currentUser = currentUser;
