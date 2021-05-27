@@ -1,13 +1,20 @@
 package controller;
 
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import domain.User;
 import domain.UserEvent;
+import javafx.scene.layout.AnchorPane;
 import repository.event.IEventRepository;
 import util.Observable;
+import util.Observer;
+import util.ObserverManager;
 
-public class EventController implements Observable {
+import java.io.IOException;
+
+public class Event extends AnchorPane implements Observable {
 
     //TODO: Comment code where necessary. Document functions. Refactor if needed
 
@@ -19,7 +26,22 @@ public class EventController implements Observable {
     User currentUser;
     boolean state;
 
-    public void setUp(UserEvent e, User u, IEventRepository repo) {
+    private final ObserverManager manager = new ObserverManager();
+
+    public Event() {
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource(
+                "/customElements/event/eventElement.fxml"));
+        fxmlLoader.setRoot(this);
+        fxmlLoader.setController(this);
+
+        try {
+            fxmlLoader.load();
+        } catch (IOException exception) {
+            throw new RuntimeException(exception);
+        }
+    }
+
+    public void setUp(UserEvent e, User u) {
         event = e;
         currentUser = u;
 //        this.repo = repo;
@@ -47,7 +69,8 @@ public class EventController implements Observable {
         }
     }
 
-    public void subscribe() {
+    @FXML
+    protected void subscribe() {
         event.addAttending(currentUser.getID());
         unsub.setVisible(true);
         sub.setVisible(false);
@@ -56,7 +79,8 @@ public class EventController implements Observable {
 //        repo.update(event);
     }
 
-    public void unsubscribe() {
+    @FXML
+    protected void unsubscribe() {
         event.removeAttending(currentUser.getID());
         unsub.setVisible(false);
         sub.setVisible(true);
@@ -64,7 +88,8 @@ public class EventController implements Observable {
 //        repo.update(event);
     }
 
-    public void changeState() {
+    @FXML
+    protected void changeState() {
         state = !state;
         if (state) {
             // &#128276;
@@ -76,5 +101,20 @@ public class EventController implements Observable {
             event.unsubscribe(currentUser.getID());
         }
 //        repo.update(event);
+    }
+
+    public void NotifyObservers()
+    {
+        manager.NotifyObservers(this);
+    }
+
+    public void AddObserver(Observer o)
+    {
+        manager.AddObserver(o);
+    }
+
+    public void RemoveObserver(Observer o)
+    {
+        manager.RemoveObserver(o);
     }
 }

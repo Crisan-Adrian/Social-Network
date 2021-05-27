@@ -3,6 +3,7 @@ package controller;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;
+import domain.FriendRequestStatus;
 import domain.User;
 import javafx.scene.layout.AnchorPane;
 import service.FriendshipService;
@@ -12,20 +13,19 @@ import util.ObserverManager;
 
 import java.io.IOException;
 
-public class FriendRequestSender extends AnchorPane implements Observable {
-
+public class FriendRequestReceived extends AnchorPane implements Observable {
     //TODO: Comment code where necessary. Document functions. Refactor if needed
 
-    public Label to;
+    public Label from;
     User user;
-    User toUser;
+    User fromUser;
     FriendshipService service;
 
     private final ObserverManager manager = new ObserverManager();
 
-    public FriendRequestSender() {
+    public FriendRequestReceived() {
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource(
-                "/customElements/friendRequestSender/friendRequestSenderElement.fxml"));
+                "/customElements/friendRequestReceived/friendRequestReceivedElement.fxml"));
         fxmlLoader.setRoot(this);
         fxmlLoader.setController(this);
 
@@ -36,23 +36,30 @@ public class FriendRequestSender extends AnchorPane implements Observable {
         }
     }
 
-    public void setup(User currentUser, User to, FriendshipService friendshipService) {
+    public void setup(User currentUser, User from, FriendshipService friendshipService) {
         this.user = currentUser;
-        this.toUser = to;
+        this.fromUser = from;
         this.service = friendshipService;
 
         loadElement();
     }
 
     private void loadElement() {
-        to.setText(toUser.getFirstName() + " " + toUser.getLastName());
+        from.setText(fromUser.getFirstName() + " " + fromUser.getLastName() + " \n(" + fromUser.getEmail() + ")");
     }
 
     @FXML
-    protected void cancel() {
-        service.cancelFriendshipRequest(user.getID(), toUser.getID());
+    protected void reject() {
+        service.answerFriendshipRequest(user.getID(), fromUser.getID(), FriendRequestStatus.REJECTED);
         NotifyObservers();
     }
+
+    @FXML
+    protected void accept() {
+        service.answerFriendshipRequest(user.getID(), fromUser.getID(), FriendRequestStatus.ACCEPTED);
+        NotifyObservers();
+    }
+
 
     public void NotifyObservers()
     {

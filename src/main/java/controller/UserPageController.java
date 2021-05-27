@@ -81,8 +81,8 @@ public class UserPageController extends Observer {
     private UserService userService;
     private FriendshipService friendshipService;
     private MessageService messageService;
-    private Map<FriendRequestReceiverElementController, AnchorPane> requestMap;
-    private List<FriendRequestSender> requestSentMap;
+    private List<FriendRequestReceived> requestMap;
+    private List<FriendRequestSent> requestSentMap;
     private List<FriendElement> friendMap;
     private Map<Observable, AnchorPane> searchMap;
 
@@ -108,7 +108,7 @@ public class UserPageController extends Observer {
     @FXML
     public void initialize() {
         friendMap = new ArrayList<>();
-        requestMap = new HashMap<>();
+        requestMap = new ArrayList<>();
         searchMap = new HashMap<>();
         requestSentMap = new ArrayList<>();
 
@@ -135,7 +135,7 @@ public class UserPageController extends Observer {
     }
 
     public void initialLoad() {
-        loadFriendRequests();
+        loadReceivedRequests();
         loadFriends();
         loadSentRequests();
         loadEvents(eventRepo.getFirstPage());
@@ -151,34 +151,32 @@ public class UserPageController extends Observer {
         try {
             AnchorPane root = loader.load();
 
-            MainPageController userPageController = loader.getController();
-            userPageController.setup(userService, friendshipService, messageService, eventRepo);
+            MainPageController mainPageController = loader.getController();
+            mainPageController.setup(userService, friendshipService, messageService);
 
             stage.setScene(new Scene(root, 800, 700));
         } catch (IOException ignored) {
         }
     }
 
-    public void loadFriendRequests() {
+    public void loadReceivedRequests() {
         requestMap.clear();
         requestsRecv.getChildren().clear();
         int i = 0;
         for (Long fromID : friendshipService.getUserFriendRequests(currentUser.getID())) {
             try {
-                FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/view/friendRequestReceiverElement.fxml"));
-                AnchorPane friendRequest = fxmlLoader.load();
-                FriendRequestReceiverElementController elementController = fxmlLoader.getController();
+                FriendRequestReceived friendRequest = new FriendRequestReceived();
                 User from = userService.GetOne(fromID);
-                elementController.setup(currentUser, from, friendshipService);
+                friendRequest.setup(currentUser, from, friendshipService);
                 friendRequest.setLayoutX(10);
                 friendRequest.setLayoutY(10 + 30 * i);
 
-                requestMap.put(elementController, friendRequest);
-                elementController.AddObserver(this);
+                requestMap.add(friendRequest);
+                friendRequest.AddObserver(this);
 
                 requestsRecv.getChildren().add(friendRequest);
                 i++;
-            } catch (IOException e) {
+            } catch (RuntimeException e) {
                 e.printStackTrace();
             }
         }
@@ -190,7 +188,7 @@ public class UserPageController extends Observer {
         int i = 0;
         for (Long toID : friendshipService.getUserSentRequests(currentUser.getID())) {
             try {
-                FriendRequestSender friendRequest = new FriendRequestSender();
+                FriendRequestSent friendRequest = new FriendRequestSent();
                 User to = userService.GetOne(toID);
                 friendRequest.setup(currentUser, to, friendshipService);
                 friendRequest.setLayoutX(10);
@@ -230,7 +228,7 @@ public class UserPageController extends Observer {
     @Override
     public void update(Observable o) {
         boolean found = false;
-        if (o instanceof FriendRequestReceiverElementController) {
+        if (o instanceof FriendRequestReceived) {
             if (requestsRecv.getChildren().remove(requestMap.remove(o)))
                 found = true;
             loadFriends();
@@ -239,7 +237,7 @@ public class UserPageController extends Observer {
             if (friends.getChildren().remove(friendMap.remove(o)))
                 found = true;
         }
-        if (o instanceof FriendRequestSender) {
+        if (o instanceof FriendRequestSent) {
             if (requestsSent.getChildren().remove(requestSentMap.remove(o)))
                 found = true;
             loadSentRequests();
@@ -253,7 +251,7 @@ public class UserPageController extends Observer {
             requestsS = friendshipService.getUserSentRequests(currentUser.getID());
             loadSentRequests();
             loadFriends();
-            loadFriendRequests();
+            loadReceivedRequests();
         });
     }
 
@@ -281,9 +279,9 @@ public class UserPageController extends Observer {
                     } else if (requestsS.contains(user.getID())) {
                         // Load sent request element
 
-                        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/customElements/friendRequestSender/friendRequestSenderElement.fxml"));
+                        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/customElements/friendRequestSent/friendRequestSentElement.fxml"));
                         AnchorPane friend = fxmlLoader.load();
-                        FriendRequestSender elementController = fxmlLoader.getController();
+                        FriendRequestSent elementController = fxmlLoader.getController();
                         elementController.setup(currentUser, user, friendshipService);
 
                         searchMap.put(elementController, friend);
@@ -293,9 +291,9 @@ public class UserPageController extends Observer {
                     } else if (requestsR.contains(user.getID())) {
                         // Load recv request element
 
-                        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/view/friendRequestReceiverElement.fxml"));
+                        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/customElements/friendRequestReceived/friendRequestReceivedElement.fxml"));
                         AnchorPane friend = fxmlLoader.load();
-                        FriendRequestReceiverElementController elementController = fxmlLoader.getController();
+                        FriendRequestReceived elementController = fxmlLoader.getController();
                         elementController.setup(currentUser, user, friendshipService);
 
                         searchMap.put(elementController, friend);
@@ -658,13 +656,11 @@ public class UserPageController extends Observer {
         for (UserEvent event : page) {
             if (event.getEventDate().compareTo(LocalDate.now()) >= 0) {
                 try {
-                    FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/view/eventElement.fxml"));
-                    AnchorPane eventElement = fxmlLoader.load();
-                    EventController elementController = fxmlLoader.getController();
-                    elementController.setUp(event, currentUser, eventRepo);
-                    elementController.AddObserver(this);
+                    Event eventElement = new Event();
+                    eventElement.setUp(event, currentUser);
+                    eventElement.AddObserver(this);
                     eventsBox.getChildren().add(eventElement);
-                } catch (IOException e) {
+                } catch (RuntimeException e) {
                     e.printStackTrace();
                 }
             }

@@ -46,7 +46,7 @@ public class MainPageController {
         divider.positionProperty().addListener((observable, oldvalue, newvalue) -> divider.setPosition(0.5));
     }
 
-    public void setup(UserService userService, FriendshipService friendshipService, MessageService messageService, IEventRepository eventRepo) {
+    public void setup(UserService userService, FriendshipService friendshipService, MessageService messageService) {
         this.userService = userService;
         this.friendshipService = friendshipService;
         this.messageService = messageService;
