@@ -4,6 +4,7 @@ import domain.UserEvent;
 import domain.validators.Validator;
 import exceptions.RepoException;
 import repository.JDBCUtils;
+import repository.PaginationInfo;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -115,7 +116,7 @@ public class EventDB implements IEventRepository {
         return events;
     }
 
-    public int getPageCount() {
+    public int getPageCount(PaginationInfo paginationInfo) {
         int pageCount;
         int temp;
 
@@ -138,14 +139,6 @@ public class EventDB implements IEventRepository {
         }
 
         return pageCount;
-    }
-
-    public boolean hasPrevPage() {
-        return page != 0;
-    }
-
-    public boolean hasNextPage() {
-        return page < getPageCount() - 1;
     }
 
     public List<UserEvent> getPage(int page) {
@@ -197,62 +190,40 @@ public class EventDB implements IEventRepository {
         return events;
     }
 
-    public List<UserEvent> getPage() {
+    public List<UserEvent> getPage(PaginationInfo paginationInfo) {
         return getPage(page);
-    }
-
-    public List<UserEvent> getNextPage() {
-        return getPage(page + 1);
-    }
-
-    public List<UserEvent> getPrevPage() {
-        return getPage(page - 1);
-    }
-
-    public List<UserEvent> getFirstPage() {
-        return getPage(0);
-    }
-
-    public int getPageNumber() {
-        return page;
     }
 
     @Override
     public UserEvent save(UserEvent entity) {
         validator.validate(entity);
-        String sqlFindID = "SELECT next_id FROM event_id";
-        String sqlIncID = "UPDATE event_id SET next_id=next_id+1";
-        String sql = "INSERT INTO events(event_id, ev_name, ev_creator, ev_date) VALUES(?, ?, ?, ?)";
+        String sql = "INSERT INTO events(ev_name, ev_creator, ev_date) VALUES(?, ?, ?) RETURNING event_id";
         String sqlSetTo = "INSERT INTO event_users(event_id, user_id, get_notifications) VALUES(?, ?, ?)";
 
-        Connection connection = dbUtils.getConnection();
+        try (Connection connection = dbUtils.getConnection()) {
 
-        try (PreparedStatement statement = connection.prepareStatement(sql);
-             PreparedStatement findID = connection.prepareStatement(sqlFindID);
-             PreparedStatement setTo = connection.prepareStatement(sqlSetTo);
-             PreparedStatement incID = connection.prepareStatement(sqlIncID)) {
+            try (PreparedStatement statement = connection.prepareStatement(sql);
+                 PreparedStatement setTo = connection.prepareStatement(sqlSetTo)) {
 
-            ResultSet result = findID.executeQuery();
-            result.next();
-            entity.setID(result.getLong("next_id"));
+                statement.setString(1, entity.getName());
+                statement.setLong(2, entity.getCreator());
+                statement.setObject(3, entity.getEventDate());
+                ResultSet result = statement.executeQuery();
+                result.next();
+                entity.setID(result.getLong("event_id"));
 
-            statement.setLong(1, entity.getID());
-            statement.setString(2, entity.getName());
-            statement.setLong(3, entity.getCreator());
-            statement.setObject(4, entity.getEventDate());
-            statement.execute();
-
-            incID.execute();
-
-            for (Map.Entry<Long, Boolean> entry : entity.getAttending().entrySet()) {
-                setTo.setLong(1, entity.getID());
-                setTo.setLong(2, entry.getKey());
-                setTo.setBoolean(3, entry.getValue());
-                setTo.execute();
+                for (Map.Entry<Long, Boolean> entry : entity.getAttending().entrySet()) {
+                    setTo.setLong(1, entity.getID());
+                    setTo.setLong(2, entry.getKey());
+                    setTo.setBoolean(3, entry.getValue());
+                    setTo.execute();
+                }
+            } catch (SQLException throwable) {
+                //System.out.println(throwable.getMessage());
+                throw new RepoException("EventElement BD fail" + throwable.getMessage());
             }
         } catch (SQLException throwable) {
-            //System.out.println(throwable.getMessage());
-            throw new RepoException("EventElement BD fail" + throwable.getMessage());
+            throwable.printStackTrace();
         }
         return entity;
     }

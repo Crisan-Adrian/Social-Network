@@ -98,39 +98,32 @@ public class MessageDB implements IMessageRepository {
     @Override
     public Message save(Message entity) {
         validator.validate(entity);
-        String sqlFindID = "SELECT id FROM next_id";
-        String sqlIncID = "UPDATE next_id SET id=id+1";
-        String sql = "INSERT INTO messages(msg_id, msg_body, from_user, msg_time, reply) VALUES(?, ?, ?, ?, ?)";
-        String sql2 = "INSERT INTO messages(msg_id, msg_body, from_user, msg_time) VALUES(?, ?, ?, ?)";
+        String sql = "INSERT INTO messages(msg_body, from_user, msg_time) VALUES(?, ?, ?) RETURNING msg_id";
+        String sqlReply = "INSERT INTO messages(msg_body, from_user, msg_time, reply) VALUES(?, ?, ?, ?) RETURNING msg_id";
         String sqlSetTo = "INSERT INTO message_user(m_id, u_id) VALUES(?, ?)";
 
         Connection connection = dbUtils.getConnection();
 
         try (PreparedStatement statement = connection.prepareStatement(sql);
-             PreparedStatement statement2 = connection.prepareStatement(sql2);
-             PreparedStatement findID = connection.prepareStatement(sqlFindID);
-             PreparedStatement setTo = connection.prepareStatement(sqlSetTo);
-             PreparedStatement incID = connection.prepareStatement(sqlIncID)) {
+             PreparedStatement statementReply = connection.prepareStatement(sqlReply);
+             PreparedStatement setTo = connection.prepareStatement(sqlSetTo)) {
 
-            ResultSet result = findID.executeQuery();
-            result.next();
-            entity.setID(result.getLong("id"));
             if (entity.getReply() != null) {
-                statement.setLong(1, entity.getID());
-                statement.setString(2, entity.getMessage());
-                statement.setLong(3, entity.getFrom());
-                statement.setObject(4, entity.getTimestamp());
-                statement.setLong(5, entity.getReply());
-                statement.execute();
+                statementReply.setString(1, entity.getMessage());
+                statementReply.setLong(2, entity.getFrom());
+                statementReply.setObject(3, entity.getTimestamp());
+                statementReply.setLong(4, entity.getReply());
+                ResultSet result = statementReply.executeQuery();
+                result.next();
+                entity.setID(result.getLong("msg_id"));
             } else {
-                statement2.setLong(1, entity.getID());
-                statement2.setString(2, entity.getMessage());
-                statement2.setLong(3, entity.getFrom());
-                statement2.setObject(4, entity.getTimestamp());
-                statement2.execute();
+                statement.setString(1, entity.getMessage());
+                statement.setLong(2, entity.getFrom());
+                statement.setObject(3, entity.getTimestamp());
+                ResultSet result = statement.executeQuery();
+                result.next();
+                entity.setID(result.getLong("msg_id"));
             }
-
-            incID.execute();
 
             for (Long to : entity.getTo()) {
                 setTo.setLong(1, entity.getID());

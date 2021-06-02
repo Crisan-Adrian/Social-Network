@@ -634,14 +634,14 @@ public class UserPageController extends Observer {
             }
 
             UserEvent newEvent = new UserEvent(currentUser.getID(), date, name);
-            eventRepo.save(newEvent);
-            loadEvents(eventRepo.getPage(eventRepo.getPageNumber()));
+//            eventRepo.save(newEvent);
+//            loadEvents(eventRepo.getPage(eventRepo.getPageNumber()));
         }
     }
 
     public void loadPrevPageE() {
-        List<UserEvent> page = eventRepo.getPrevPage();
-        loadEvents(page);
+//        List<UserEvent> page = eventRepo.getPrevPage();
+//        loadEvents(page);
     }
 
     public void loadEvents(List<UserEvent> page) {
