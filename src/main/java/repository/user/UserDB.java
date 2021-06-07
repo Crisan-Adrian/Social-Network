@@ -5,6 +5,7 @@ import domain.validators.Validator;
 import exceptions.RepoException;
 import repository.JDBCUtils;
 import repository.PaginationInfo;
+import repository.PagingUtils;
 
 import java.sql.*;
 import java.util.*;
@@ -79,43 +80,51 @@ public class UserDB implements IUserRepository {
 
         List<User> utilizatori = new LinkedList<>();
         Map<String, String> matchParams = paginationInfo.getMatcher();
-        if (!validateMatchers(matchParams)) {
+        if (!PagingUtils.validateMatchers(matchParams, validMatchKeys)) {
             throw new RepoException("Invalid match parameters");
         }
         int matchersNo = matchParams.size();
-        String matchers = buildMatcher(matchParams.keySet());
+        String matchers = PagingUtils.buildMatcher(matchParams.keySet());
         List<String> matchValues = (List<String>) matchParams.values();
 
         String sql = "SELECT * FROM public.users ORDER BY lastname, firstname, email " + matchers + " LIMIT ? OFFSET ?";
+        int pageSize = paginationInfo.getPageSize();
+        int pageNumber = paginationInfo.getPageNumber();
 
-        Connection connection = dbUtils.getConnection();
+        if (!PagingUtils.validatePage(pageSize, pageNumber)) {
+            throw new RepoException("Invalid pageSize or pageNumber");
+        }
 
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            int pageSize = paginationInfo.getPageSize();
-            int pageNumber = paginationInfo.getPageNumber();
-            for (int i = 1; i <= matchersNo; i++) {
-                statement.setString(i, "%" + matchValues.get(i - 1) + "%");
-            }
-            statement.setInt(matchersNo + 1, pageSize);
-            statement.setInt(matchersNo + 2, pageSize * pageNumber);
+        try (Connection connection = dbUtils.getConnection()) {
 
-            ResultSet resultSet = statement.executeQuery();
-            while (resultSet.next()) {
-                User user = new User(
-                        resultSet.getString("firstName"),
-                        resultSet.getString("lastName"),
-                        resultSet.getString("email"),
-                        resultSet.getString("salt"),
-                        resultSet.getString("password"));
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                for (int i = 1; i <= matchersNo; i++) {
+                    statement.setString(i, "%" + matchValues.get(i - 1) + "%");
+                }
+                statement.setInt(matchersNo + 1, pageSize);
+                statement.setInt(matchersNo + 2, pageSize * pageNumber);
 
-                user.setID(resultSet.getLong("id"));
-                utilizatori.add(user);
-            }
+                ResultSet resultSet = statement.executeQuery();
+                while (resultSet.next()) {
+                    User user = new User(
+                            resultSet.getString("firstName"),
+                            resultSet.getString("lastName"),
+                            resultSet.getString("email"),
+                            resultSet.getString("salt"),
+                            resultSet.getString("password"));
 
-            if (utilizatori.size() == 0) {
+                    user.setID(resultSet.getLong("id"));
+                    utilizatori.add(user);
+                }
+
+                if (utilizatori.size() == 0) {
+                    utilizatori = null;
+                }
+            } catch (SQLException ignored) {
                 utilizatori = null;
             }
-        } catch (SQLException ignored) {
+        } catch (SQLException throwable) {
+            throwable.printStackTrace();
             utilizatori = null;
         }
         return utilizatori;
@@ -125,70 +134,47 @@ public class UserDB implements IUserRepository {
         int pageCount;
         int temp;
 
+        int pageSize = paginationInfo.getPageSize();
+        if(pageSize > 1) {
+            throw new RepoException("Invalid pageSize or pageNumber");
+        }
+
         Map<String, String> matchParams = paginationInfo.getMatcher();
-        if (!validateMatchers(matchParams)) {
+        if (!PagingUtils.validateMatchers(matchParams, validMatchKeys)) {
             throw new RepoException("Invalid match parameters");
         }
         int matchersNo = matchParams.size();
-        String matchers = buildMatcher(matchParams.keySet());
+        String matchers = PagingUtils.buildMatcher(matchParams.keySet());
         List<String> matchValues = (List<String>) matchParams.values();
 
         String sql = "SELECT COUNT(id) as count FROM public.users " + matchers;
 
-        Connection connection = dbUtils.getConnection();
+        try (Connection connection = dbUtils.getConnection()) {
 
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-            for (int i = 1; i <= matchersNo; i++) {
-                statement.setString(i, "%" + matchValues.get(i - 1) + "%");
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                for (int i = 1; i <= matchersNo; i++) {
+                    statement.setString(i, "%" + matchValues.get(i - 1) + "%");
+                }
+
+                ResultSet resultSet = statement.executeQuery();
+                resultSet.next();
+                temp = resultSet.getInt("count");
+
+
+            } catch (SQLException throwable) {
+                throwable.printStackTrace();
+                return 0;
             }
-
-            ResultSet resultSet = statement.executeQuery();
-            resultSet.next();
-            temp = resultSet.getInt("count");
-
-
-        } catch (SQLException throwable) {
-            throwable.printStackTrace();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
             return 0;
         }
-        int pageSize = paginationInfo.getPageSize();
         pageCount = temp / pageSize;
         if (temp % pageSize != 0) {
             pageCount++;
         }
 
         return pageCount;
-    }
-
-    private boolean validateMatchers(Map<String, String> matchParams) {
-        List<String> keys = new ArrayList<>();
-        for (String key : matchParams.keySet()) {
-            if (keys.contains(key)) {
-                return false;
-            }
-            if (!validMatchKeys.contains(key)) {
-                return false;
-            }
-            keys.add(key);
-        }
-        return true;
-    }
-
-    public String buildMatcher(Set<String> keys) {
-        if (keys.isEmpty()) {
-            return "";
-        }
-        StringBuilder matcher = new StringBuilder("WHERE ");
-        boolean first = true;
-        for (String key : keys) {
-            if (!first) {
-                matcher.append("AND ");
-            }
-            matcher.append(key).append(" LIKE ? ");
-            first = false;
-        }
-        System.out.println(matcher);
-        return matcher.toString();
     }
 
     // -----------------------------------------------------------------------------------------------------------------

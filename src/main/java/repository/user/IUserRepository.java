@@ -8,7 +8,8 @@ import java.util.List;
 
 /**
  * Paged repository for the User class. Paging functions use Pagination info helper class.
- * Valid match keys are "email", "firstname", "lastname", valid pageSize and pageNumber are positive integers.
+ * Valid match keys are "email", "firstname", "lastname", valid pageSize is positive non zero integer
+ * and Valid pageNumber is positive integer.
  */
 public interface IUserRepository extends IRepository<Long, User> {
 

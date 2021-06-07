@@ -1,10 +1,12 @@
 package repository.event;
 
+import domain.User;
 import domain.UserEvent;
 import domain.validators.Validator;
 import exceptions.RepoException;
 import repository.JDBCUtils;
 import repository.PaginationInfo;
+import repository.PagingUtils;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -12,12 +14,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -29,12 +26,9 @@ public class EventDB implements IEventRepository {
 
     private final JDBCUtils dbUtils;
 
-    private int page;
-
     public EventDB(Validator<UserEvent> validator, Properties properties) {
         this.dbUtils = new JDBCUtils(properties);
         this.validator = validator;
-        page = 0;
     }
 
     @Override
@@ -43,32 +37,36 @@ public class EventDB implements IEventRepository {
                 "FROM public.events E JOIN public.event_users EU ON E.event_id=EU.event_id WHERE E.event_id=?" +
                 "GROUP BY E.event_id, ev_name, ev_date, ev_creator ORDER BY ev_date";
 
-        Connection connection = dbUtils.getConnection();
+        try (Connection connection = dbUtils.getConnection()) {
 
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
 
-            statement.setLong(1, id);
+                statement.setLong(1, id);
 
-            ResultSet resultSet = statement.executeQuery();
-            resultSet.next();
+                ResultSet resultSet = statement.executeQuery();
+                resultSet.next();
 
-            String toStringU = resultSet.getString("users");
-            List<Long> toListU = Arrays.stream(toStringU.split(",")).map(Long::parseLong).collect(Collectors.toList());
-            String toStringN = resultSet.getString("notifications");
-            List<Boolean> toListN = Arrays.stream(toStringN.split(",")).map(Boolean::parseBoolean).collect(Collectors.toList());
+                String toStringU = resultSet.getString("users");
+                List<Long> toListU = Arrays.stream(toStringU.split(",")).map(Long::parseLong).collect(Collectors.toList());
+                String toStringN = resultSet.getString("notifications");
+                List<Boolean> toListN = Arrays.stream(toStringN.split(",")).map(Boolean::parseBoolean).collect(Collectors.toList());
 
-            Map<Long, Boolean> users = IntStream.range(0, toListU.size()).boxed().collect(Collectors.toMap(toListU::get, toListN::get));
+                Map<Long, Boolean> users = IntStream.range(0, toListU.size()).boxed().collect(Collectors.toMap(toListU::get, toListN::get));
 
-            UserEvent event = new UserEvent(
-                    resultSet.getLong("ev_creator"),
-                    resultSet.getObject("ev_date", LocalDate.class),
-                    resultSet.getString("ev_name"));
-            event.setAttending(users);
-            event.setID(resultSet.getLong("msg_id"));
+                UserEvent event = new UserEvent(
+                        resultSet.getLong("ev_creator"),
+                        resultSet.getObject("ev_date", LocalDate.class),
+                        resultSet.getString("ev_name"));
+                event.setAttending(users);
+                event.setID(resultSet.getLong("msg_id"));
 
-            return event;
+                return event;
+            } catch (SQLException throwable) {
+                //System.out.println(throwable.getMessage());
+                return null;
+            }
         } catch (SQLException throwable) {
-            //System.out.println(throwable.getMessage());
+            throwable.printStackTrace();
             return null;
         }
     }
@@ -77,118 +75,134 @@ public class EventDB implements IEventRepository {
     public Iterable<UserEvent> findAll() {
         List<UserEvent> events = new LinkedList<>();
 
-        Connection connection = dbUtils.getConnection();
+        try (Connection connection = dbUtils.getConnection()) {
 
-        try {
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery("SELECT E.event_id as id, ev_name, ev_date, ev_creator, COALESCE(string_agg(cast(user_id AS VARCHAR(100)), ','), '') as users, COALESCE(string_agg(cast(get_notifications AS VARCHAR(100)), ','), '') as notifications " +
-                    "FROM public.events E LEFT OUTER JOIN public.event_users EU ON E.event_id=EU.event_id " +
-                    "GROUP BY E.event_id, ev_name, ev_date, ev_creator ORDER BY ev_date, E.event_id");
+            try {
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery("SELECT E.event_id as id, ev_name, ev_date, ev_creator, COALESCE(string_agg(cast(user_id AS VARCHAR(100)), ','), '') as users, COALESCE(string_agg(cast(get_notifications AS VARCHAR(100)), ','), '') as notifications " +
+                        "FROM public.events E LEFT OUTER JOIN public.event_users EU ON E.event_id=EU.event_id " +
+                        "GROUP BY E.event_id, ev_name, ev_date, ev_creator ORDER BY ev_date, E.event_id");
 
-            while (resultSet.next()) {
-                Map<Long, Boolean> users;
-                String toStringU = resultSet.getString("users");
-                String toStringN = resultSet.getString("notifications");
-                if (!toStringU.equals("") && !toStringN.equals("")) {
-                    List<Long> toListU = Arrays.stream(toStringU.split(",")).map(Long::parseLong).collect(Collectors.toList());
-                    List<Boolean> toListN = Arrays.stream(toStringN.split(",")).map(Boolean::parseBoolean).collect(Collectors.toList());
+                while (resultSet.next()) {
+                    Map<Long, Boolean> users;
+                    String toStringU = resultSet.getString("users");
+                    String toStringN = resultSet.getString("notifications");
+                    if (!toStringU.equals("") && !toStringN.equals("")) {
+                        List<Long> toListU = Arrays.stream(toStringU.split(",")).map(Long::parseLong).collect(Collectors.toList());
+                        List<Boolean> toListN = Arrays.stream(toStringN.split(",")).map(Boolean::parseBoolean).collect(Collectors.toList());
 
-                    users = new HashMap<>(IntStream.range(0, toListU.size()).boxed().collect(Collectors.toMap(toListU::get, toListN::get)));
-                } else {
-                    users = new HashMap<>();
+                        users = new HashMap<>(IntStream.range(0, toListU.size()).boxed().collect(Collectors.toMap(toListU::get, toListN::get)));
+                    } else {
+                        users = new HashMap<>();
+                    }
+
+                    UserEvent event = new UserEvent(
+                            resultSet.getLong("ev_creator"),
+                            resultSet.getObject("ev_date", LocalDate.class),
+                            resultSet.getString("ev_name"));
+                    event.setID(resultSet.getLong("id"));
+                    event.setAttending(users);
+                    events.add(event);
+
                 }
-
-                UserEvent event = new UserEvent(
-                        resultSet.getLong("ev_creator"),
-                        resultSet.getObject("ev_date", LocalDate.class),
-                        resultSet.getString("ev_name"));
-                event.setID(resultSet.getLong("id"));
-                event.setAttending(users);
-                events.add(event);
-
+            } catch (SQLException throwable) {
+                throwable.printStackTrace();
             }
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
+        } catch (SQLException throwable) {
+            throwable.printStackTrace();
         }
         return events;
     }
 
+    @Override
+    public List<UserEvent> getPage(PaginationInfo paginationInfo) {
+        String sql = "SELECT E.event_id as id, ev_name, ev_date, ev_creator, COALESCE(string_agg(cast(user_id AS VARCHAR(100)), ','), '') as users, COALESCE(string_agg(cast(get_notifications AS VARCHAR(100)), ','), '') as notifications " +
+                "FROM public.events E LEFT OUTER JOIN public.event_users EU ON E.event_id=EU.event_id " +
+                "GROUP BY E.event_id, ev_name, ev_date, ev_creator ORDER BY ev_date, E.event_id LIMIT ? OFFSET ?";
+        List<UserEvent> events = new LinkedList<>();
+        int pageSize = paginationInfo.getPageSize();
+        int pageNumber = paginationInfo.getPageNumber();
+
+        if (!PagingUtils.validatePage(pageSize, pageNumber)) {
+            throw new RepoException("Invalid pageSize or pageNumber");
+        }
+
+        try (Connection connection = dbUtils.getConnection()) {
+
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setInt(1, pageSize);
+                statement.setInt(2, pageNumber * pageSize);
+
+                ResultSet resultSet = statement.executeQuery();
+
+                while (resultSet.next()) {
+                    Map<Long, Boolean> users;
+                    String toStringU = resultSet.getString("users");
+                    String toStringN = resultSet.getString("notifications");
+                    if (!toStringU.equals("") && !toStringN.equals("")) {
+                        List<Long> toListU = Arrays.stream(toStringU.split(",")).map(Long::parseLong).collect(Collectors.toList());
+                        List<Boolean> toListN = Arrays.stream(toStringN.split(",")).map(Boolean::parseBoolean).collect(Collectors.toList());
+
+                        users = new HashMap<>(IntStream.range(0, toListU.size()).boxed().collect(Collectors.toMap(toListU::get, toListN::get)));
+                    } else {
+                        users = new HashMap<>();
+                    }
+
+                    UserEvent event = new UserEvent(
+                            resultSet.getLong("ev_creator"),
+                            resultSet.getObject("ev_date", LocalDate.class),
+                            resultSet.getString("ev_name"));
+                    event.setID(resultSet.getLong("id"));
+                    event.setAttending(users);
+                    events.add(event);
+
+                }
+
+                if (events.size() == 0) {
+                    events = null;
+                }
+            } catch (SQLException throwable) {
+                System.out.println(throwable.getMessage());
+                events = null;
+            }
+        } catch (SQLException throwable) {
+            throwable.printStackTrace();
+            events = null;
+        }
+        return events;
+    }
+
+    @Override
     public int getPageCount(PaginationInfo paginationInfo) {
         int pageCount;
         int temp;
 
-        Connection connection = dbUtils.getConnection();
-
-        try {
-            Statement statement = connection.createStatement();
-
-            ResultSet resultSet = statement.executeQuery("SELECT COUNT(*) as count FROM public.events");
-            resultSet.next();
-            temp = resultSet.getInt("count");
-
-        } catch (SQLException ignored) {
-            return 0;
+        int pageSize = paginationInfo.getPageSize();
+        if(pageSize > 1) {
+            throw new RepoException("Invalid pageSize or pageNumber");
         }
 
+        try (Connection connection = dbUtils.getConnection()) {
+            try {
+                Statement statement = connection.createStatement();
+
+                ResultSet resultSet = statement.executeQuery("SELECT COUNT(event_id) as count FROM public.events");
+                resultSet.next();
+                temp = resultSet.getInt("count");
+
+            } catch (SQLException ignored) {
+                return 0;
+            }
+        } catch (SQLException throwable) {
+            throwable.printStackTrace();
+            return 0;
+        }
         pageCount = temp / pageSize;
         if (temp % pageSize != 0) {
             pageCount++;
         }
 
         return pageCount;
-    }
-
-    public List<UserEvent> getPage(int page) {
-        String sql = "SELECT E.event_id as id, ev_name, ev_date, ev_creator, COALESCE(string_agg(cast(user_id AS VARCHAR(100)), ','), '') as users, COALESCE(string_agg(cast(get_notifications AS VARCHAR(100)), ','), '') as notifications " +
-                "FROM public.events E LEFT OUTER JOIN public.event_users EU ON E.event_id=EU.event_id " +
-                "GROUP BY E.event_id, ev_name, ev_date, ev_creator ORDER BY ev_date, E.event_id LIMIT ? OFFSET ?";
-        List<UserEvent> events = new LinkedList<>();
-
-        Connection connection = dbUtils.getConnection();
-
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
-
-            statement.setInt(1, pageSize);
-            statement.setInt(2, pageNumber * pageSize);
-
-            ResultSet resultSet = statement.executeQuery();
-
-            while (resultSet.next()) {
-                Map<Long, Boolean> users;
-                String toStringU = resultSet.getString("users");
-                String toStringN = resultSet.getString("notifications");
-                if (!toStringU.equals("") && !toStringN.equals("")) {
-                    List<Long> toListU = Arrays.stream(toStringU.split(",")).map(Long::parseLong).collect(Collectors.toList());
-                    List<Boolean> toListN = Arrays.stream(toStringN.split(",")).map(Boolean::parseBoolean).collect(Collectors.toList());
-
-                    users = new HashMap<>(IntStream.range(0, toListU.size()).boxed().collect(Collectors.toMap(toListU::get, toListN::get)));
-                } else {
-                    users = new HashMap<>();
-                }
-
-                UserEvent event = new UserEvent(
-                        resultSet.getLong("ev_creator"),
-                        resultSet.getObject("ev_date", LocalDate.class),
-                        resultSet.getString("ev_name"));
-                event.setID(resultSet.getLong("id"));
-                event.setAttending(users);
-                events.add(event);
-
-            }
-
-            if (events.size() == 0) {
-                events = null;
-            } else {
-                this.page = page;
-            }
-        } catch (SQLException throwable) {
-            System.out.println(throwable.getMessage());
-        }
-        return events;
-    }
-
-    public List<UserEvent> getPage(PaginationInfo paginationInfo) {
-        return getPage(page);
     }
 
     @Override
