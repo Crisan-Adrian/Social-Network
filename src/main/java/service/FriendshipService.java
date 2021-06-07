@@ -366,6 +366,12 @@ public class FriendshipService implements IFriendshipService {
         return friendList;
     }
 
+    public List<FriendshipDTO> getUserFriendsFromPeriod(Long userID, LocalDate start, LocalDate end) {
+        List<Friendship> friendships = repoFriendships.getUserFriendsFromPeriod(userID, start, end);
+        // Transform to FriendshipDTO
+        return null;
+    }
+
     @Override
     public List<FriendshipDTO> getUserFriendList(Long userID, int year, int month) {
         Predicate<FriendshipDTO> isFromPeriod = friendshipDTO ->

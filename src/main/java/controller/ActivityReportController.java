@@ -58,7 +58,7 @@ public class ActivityReportController {
         LocalDate current;
         current = start;
         List<Message> messageList = messageService.getUserMessages(currentUser.getID());
-        List<FriendshipDTO> friendshipsList = friendshipService.getUserFriendList(currentUser.getID());
+        List<FriendshipDTO> friendshipsList = friendshipService.getUserFriendsFromPeriod(currentUser.getID(), start, end.plusDays(1));
         // Iterates through days from start date to end date
         while (!current.equals(end.plusDays(1))) {
             int messagesRecv = 0;

@@ -17,9 +17,6 @@ public class FriendshipDB implements IFriendshipRepository {
     private final JDBCUtils dbUtils;
     private final Validator<Friendship> validator;
 
-    //TODO: Comment code where necessary. Document functions. Refactor if needed
-    //TODO: Implement methods
-
     public FriendshipDB(Validator<Friendship> validator, Properties properties) {
         dbUtils = new JDBCUtils(properties);
         this.validator = validator;
@@ -50,7 +47,7 @@ public class FriendshipDB implements IFriendshipRepository {
 
     @Override
     public Iterable<Friendship> findAll() {
-        List<Friendship> prietenii = new LinkedList<>();
+        List<Friendship> friendships = new LinkedList<>();
 
         Connection connection = dbUtils.getConnection();
 
@@ -63,22 +60,20 @@ public class FriendshipDB implements IFriendshipRepository {
                         resultSet.getLong("u_id_1"),
                         resultSet.getLong("u_id_2"),
                         resultSet.getDate("friendDate").toLocalDate());
-                prietenii.add(friendship);
+                friendships.add(friendship);
             }
 
         } catch (SQLException throwable) {
             //System.out.println(throwable.getMessage());
         }
-        return prietenii;
+        return friendships;
     }
 
     @Override
-    public Friendship save(Friendship entity)
-    {
+    public Friendship save(Friendship entity) {
         validator.validate(entity);
         Friendship friendship = findOne(entity.getID());
-        if(friendship == null)
-        {
+        if (friendship == null) {
             String sql = "INSERT INTO friendships(u_id_1, u_id_2, friendDate) VALUES(?, ?, ?)";
 
             Connection connection = dbUtils.getConnection();
@@ -104,8 +99,7 @@ public class FriendshipDB implements IFriendshipRepository {
 
             Connection connection = dbUtils.getConnection();
 
-            try (PreparedStatement statement = connection.prepareStatement(sql))
-            {
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.setLong(1, id.getLeft());
                 statement.setLong(2, id.getRight());
                 statement.execute();
@@ -124,16 +118,73 @@ public class FriendshipDB implements IFriendshipRepository {
 
     @Override
     public List<Friendship> getUserFriends(Long userID) {
-        return null;
+        List<Friendship> friendships = new LinkedList<>();
+
+        String sql = "SELECT * FROM public.friendships WHERE u_id_1 = ? OR u_id_2 = ?";
+
+        try (Connection connection = dbUtils.getConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setLong(1, userID);
+                statement.setLong(2, userID);
+
+                ResultSet resultSet = statement.executeQuery();
+                while (resultSet.next()) {
+                    Friendship friendship = new Friendship(
+                            resultSet.getLong("u_id_1"),
+                            resultSet.getLong("u_id_2"),
+                            resultSet.getDate("friendDate").toLocalDate());
+                    friendships.add(friendship);
+                }
+
+            } catch (SQLException throwable) {
+                throwable.printStackTrace();
+                friendships = null;
+            }
+        } catch (SQLException throwable) {
+            throwable.printStackTrace();
+            friendships = null;
+        }
+        return friendships;
     }
 
     @Override
     public List<Friendship> getUserFriendsFromPeriod(Long userID, LocalDate start, LocalDate end) {
-        return null;
+        List<Friendship> friendships = new LinkedList<>();
+
+        String sql = "SELECT * FROM public.friendships WHERE u_id_1 = ? OR u_id_2 = ? AND frienddate >= ? AND frienddate < ?";
+
+        try (Connection connection = dbUtils.getConnection()) {
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setLong(1, userID);
+                statement.setLong(2, userID);
+                statement.setDate(3, Date.valueOf(start));
+                statement.setDate(4, Date.valueOf(end));
+
+
+                ResultSet resultSet = statement.executeQuery();
+                while (resultSet.next()) {
+                    Friendship friendship = new Friendship(
+                            resultSet.getLong("u_id_1"),
+                            resultSet.getLong("u_id_2"),
+                            resultSet.getDate("friendDate").toLocalDate());
+                    friendships.add(friendship);
+                }
+
+            } catch (SQLException throwable) {
+                throwable.printStackTrace();
+                friendships = null;
+            }
+        } catch (SQLException throwable) {
+            throwable.printStackTrace();
+            friendships = null;
+        }
+        return friendships;
     }
 
     @Override
     public List<Friendship> getUserFriendsFromPeriod(Long userID, int year, int month) {
-        return null;
+        LocalDate start = LocalDate.of(year, month, 1);
+        LocalDate end = LocalDate.of(year, month, start.lengthOfMonth());
+        return getUserFriendsFromPeriod(userID, start, end);
     }
 }

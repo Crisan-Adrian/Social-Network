@@ -5,6 +5,7 @@ import domain.Friendship;
 import domain.FriendshipDTO;
 import domain.FriendshipRequest;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface IFriendshipService {
@@ -31,6 +32,8 @@ public interface IFriendshipService {
     Iterable<Friendship> getAllFriendships();
 
     List<FriendshipDTO> getUserFriendList(Long userID);
+
+    List<FriendshipDTO> getUserFriendsFromPeriod(Long userID, LocalDate start, LocalDate end);
 
     List<FriendshipDTO> getUserFriendList(Long userID, int year, int month);
 

@@ -17,10 +17,6 @@ public class FriendshipRequestDB implements IFriendRequestRepository {
     private final JDBCUtils dbUtils;
     private final Validator<FriendshipRequest> validator;
 
-    //TODO: Comment code where necessary. Document functions. Refactor if needed
-    //TODO: Implement Functions
-
-
     public FriendshipRequestDB(Validator<FriendshipRequest> validator, Properties properties) {
         dbUtils = new JDBCUtils(properties);
         this.validator = validator;
@@ -169,11 +165,79 @@ public class FriendshipRequestDB implements IFriendRequestRepository {
 
     @Override
     public List<FriendshipRequest> getUserReceivedRequests(Long userID) {
-        return null;
+        List<FriendshipRequest> requests = new LinkedList<>();
+
+        String sql = "SELECT * FROM public.friend_requests WHERE to_user = ?";
+
+        try (Connection connection = dbUtils.getConnection()) {
+
+            try (PreparedStatement statement = connection.prepareStatement(sql))
+            {
+                statement.setLong(1, userID);
+
+                ResultSet resultSet = statement.executeQuery();
+                while (resultSet.next()) {
+                    FriendRequestStatus status = switch (resultSet.getString("status")) {
+                        case "ACCEPTED" -> FriendRequestStatus.ACCEPTED;
+                        case "REJECTED" -> FriendRequestStatus.REJECTED;
+                        case "CANCELED" -> FriendRequestStatus.CANCELED;
+                        default -> FriendRequestStatus.PENDING;
+                    };
+
+                    FriendshipRequest request = new FriendshipRequest(
+                            resultSet.getLong("from_user"),
+                            resultSet.getLong("to_user"),
+                            status);
+                    requests.add(request);
+                }
+
+            } catch (SQLException throwable) {
+                throwable.printStackTrace();
+                requests = null;
+            }
+        } catch (SQLException throwable) {
+            throwable.printStackTrace();
+            requests = null;
+        }
+        return requests;
     }
 
     @Override
     public List<FriendshipRequest> getUserSentRequests(Long userID) {
-        return null;
+        List<FriendshipRequest> requests = new LinkedList<>();
+
+        String sql = "SELECT * FROM public.friend_requests WHERE from_user = ?";
+
+        try (Connection connection = dbUtils.getConnection()) {
+
+            try (PreparedStatement statement = connection.prepareStatement(sql))
+            {
+                statement.setLong(1, userID);
+
+                ResultSet resultSet = statement.executeQuery();
+                while (resultSet.next()) {
+                    FriendRequestStatus status = switch (resultSet.getString("status")) {
+                        case "ACCEPTED" -> FriendRequestStatus.ACCEPTED;
+                        case "REJECTED" -> FriendRequestStatus.REJECTED;
+                        case "CANCELED" -> FriendRequestStatus.CANCELED;
+                        default -> FriendRequestStatus.PENDING;
+                    };
+
+                    FriendshipRequest request = new FriendshipRequest(
+                            resultSet.getLong("from_user"),
+                            resultSet.getLong("to_user"),
+                            status);
+                    requests.add(request);
+                }
+
+            } catch (SQLException throwable) {
+                throwable.printStackTrace();
+                requests = null;
+            }
+        } catch (SQLException throwable) {
+            throwable.printStackTrace();
+            requests = null;
+        }
+        return requests;
     }
 }
