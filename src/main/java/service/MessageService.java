@@ -74,8 +74,10 @@ public class MessageService implements IMessageService {
 
         boolean sameConv = true;
         for (Long member : members) {
-            if (!messageMembers.contains(member))
+            if (!messageMembers.contains(member)) {
                 sameConv = false;
+                break;
+            }
         }
         if (members.size() != messageMembers.size())
             sameConv = false;

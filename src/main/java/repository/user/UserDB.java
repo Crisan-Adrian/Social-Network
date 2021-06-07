@@ -12,7 +12,6 @@ import java.util.*;
 
 public class UserDB implements IUserRepository {
 
-    //TODO: Comment code where necessary. Document functions. Refactor if needed
     private final JDBCUtils dbUtils;
 
     private final Validator<User> validator;
@@ -232,7 +231,27 @@ public class UserDB implements IUserRepository {
 
     @Override
     public User findByEmail(String email) {
-        //TODO: Implement Method
+        String sql = "SELECT * FROM public.users WHERE email=?";
+
+        try (Connection connection = dbUtils.getConnection()) {
+
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                preparedStatement.setString(1, email);
+
+                ResultSet result = preparedStatement.executeQuery();
+                result.next();
+                User resultUser = new User(
+                        result.getString("firstName"),
+                        result.getString("lastName"),
+                        result.getString("email"));
+                resultUser.setID(result.getLong("id"));
+                return resultUser;
+            } catch (SQLException throwable) {
+                return null;
+            }
+        } catch (SQLException throwable) {
+            throwable.printStackTrace();
+        }
         return null;
     }
 }

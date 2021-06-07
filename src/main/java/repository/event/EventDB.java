@@ -1,6 +1,5 @@
 package repository.event;
 
-import domain.User;
 import domain.UserEvent;
 import domain.validators.Validator;
 import exceptions.RepoException;
@@ -9,6 +8,7 @@ import repository.PaginationInfo;
 import repository.PagingUtils;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -21,9 +21,6 @@ import java.util.stream.IntStream;
 public class EventDB implements IEventRepository {
     private final Validator<UserEvent> validator;
 
-    //TODO: Comment code where necessary. Document functions. Refactor if needed
-    //TODO: Implement Functions
-
     private final JDBCUtils dbUtils;
 
     public EventDB(Validator<UserEvent> validator, Properties properties) {
@@ -33,6 +30,7 @@ public class EventDB implements IEventRepository {
 
     @Override
     public UserEvent findOne(Long id) {
+        // Selects event as a join between the event data and the event participants based on event id equality
         String sql = "SELECT E.event_id, ev_name, ev_date, ev_creator, string_agg(cast(user_id AS VARCHAR(100)), ',') as users, string_agg(cast(get_notifications AS VARCHAR(100)), ',') as notifications " +
                 "FROM public.events E JOIN public.event_users EU ON E.event_id=EU.event_id WHERE E.event_id=?" +
                 "GROUP BY E.event_id, ev_name, ev_date, ev_creator ORDER BY ev_date";
@@ -73,38 +71,18 @@ public class EventDB implements IEventRepository {
 
     @Override
     public Iterable<UserEvent> findAll() {
-        List<UserEvent> events = new LinkedList<>();
+        List<UserEvent> events = null;
 
         try (Connection connection = dbUtils.getConnection()) {
 
             try {
                 Statement statement = connection.createStatement();
+                // Selects events as a join between the event data and the event participants based on event id equality
                 ResultSet resultSet = statement.executeQuery("SELECT E.event_id as id, ev_name, ev_date, ev_creator, COALESCE(string_agg(cast(user_id AS VARCHAR(100)), ','), '') as users, COALESCE(string_agg(cast(get_notifications AS VARCHAR(100)), ','), '') as notifications " +
                         "FROM public.events E LEFT OUTER JOIN public.event_users EU ON E.event_id=EU.event_id " +
                         "GROUP BY E.event_id, ev_name, ev_date, ev_creator ORDER BY ev_date, E.event_id");
 
-                while (resultSet.next()) {
-                    Map<Long, Boolean> users;
-                    String toStringU = resultSet.getString("users");
-                    String toStringN = resultSet.getString("notifications");
-                    if (!toStringU.equals("") && !toStringN.equals("")) {
-                        List<Long> toListU = Arrays.stream(toStringU.split(",")).map(Long::parseLong).collect(Collectors.toList());
-                        List<Boolean> toListN = Arrays.stream(toStringN.split(",")).map(Boolean::parseBoolean).collect(Collectors.toList());
-
-                        users = new HashMap<>(IntStream.range(0, toListU.size()).boxed().collect(Collectors.toMap(toListU::get, toListN::get)));
-                    } else {
-                        users = new HashMap<>();
-                    }
-
-                    UserEvent event = new UserEvent(
-                            resultSet.getLong("ev_creator"),
-                            resultSet.getObject("ev_date", LocalDate.class),
-                            resultSet.getString("ev_name"));
-                    event.setID(resultSet.getLong("id"));
-                    event.setAttending(users);
-                    events.add(event);
-
-                }
+                events = processResultSet(resultSet);
             } catch (SQLException throwable) {
                 throwable.printStackTrace();
             }
@@ -116,10 +94,11 @@ public class EventDB implements IEventRepository {
 
     @Override
     public List<UserEvent> getPage(PaginationInfo paginationInfo) {
+        // Selects events as a join between the event data and the event participants based on event id equality
         String sql = "SELECT E.event_id as id, ev_name, ev_date, ev_creator, COALESCE(string_agg(cast(user_id AS VARCHAR(100)), ','), '') as users, COALESCE(string_agg(cast(get_notifications AS VARCHAR(100)), ','), '') as notifications " +
                 "FROM public.events E LEFT OUTER JOIN public.event_users EU ON E.event_id=EU.event_id " +
                 "GROUP BY E.event_id, ev_name, ev_date, ev_creator ORDER BY ev_date, E.event_id LIMIT ? OFFSET ?";
-        List<UserEvent> events = new LinkedList<>();
+        List<UserEvent> events;
         int pageSize = paginationInfo.getPageSize();
         int pageNumber = paginationInfo.getPageNumber();
 
@@ -135,32 +114,7 @@ public class EventDB implements IEventRepository {
 
                 ResultSet resultSet = statement.executeQuery();
 
-                while (resultSet.next()) {
-                    Map<Long, Boolean> users;
-                    String toStringU = resultSet.getString("users");
-                    String toStringN = resultSet.getString("notifications");
-                    if (!toStringU.equals("") && !toStringN.equals("")) {
-                        List<Long> toListU = Arrays.stream(toStringU.split(",")).map(Long::parseLong).collect(Collectors.toList());
-                        List<Boolean> toListN = Arrays.stream(toStringN.split(",")).map(Boolean::parseBoolean).collect(Collectors.toList());
-
-                        users = new HashMap<>(IntStream.range(0, toListU.size()).boxed().collect(Collectors.toMap(toListU::get, toListN::get)));
-                    } else {
-                        users = new HashMap<>();
-                    }
-
-                    UserEvent event = new UserEvent(
-                            resultSet.getLong("ev_creator"),
-                            resultSet.getObject("ev_date", LocalDate.class),
-                            resultSet.getString("ev_name"));
-                    event.setID(resultSet.getLong("id"));
-                    event.setAttending(users);
-                    events.add(event);
-
-                }
-
-                if (events.size() == 0) {
-                    events = null;
-                }
+                events = processResultSet(resultSet);
             } catch (SQLException throwable) {
                 System.out.println(throwable.getMessage());
                 events = null;
@@ -169,6 +123,39 @@ public class EventDB implements IEventRepository {
             throwable.printStackTrace();
             events = null;
         }
+        return events;
+    }
+
+    private List<UserEvent> processResultSet(ResultSet resultSet) throws SQLException {
+        List<UserEvent> events = new LinkedList<>();
+        while (resultSet.next()) {
+            Map<Long, Boolean> users;
+            String toStringU = resultSet.getString("users");
+            String toStringN = resultSet.getString("notifications");
+            if (!toStringU.equals("") && !toStringN.equals("")) {
+                // Maps user IDs and notification preferences to list and subsequently to map
+                List<Long> toListUsers = Arrays.stream(toStringU.split(",")).map(Long::parseLong).collect(Collectors.toList());
+                List<Boolean> toListNotifications = Arrays.stream(toStringN.split(",")).map(Boolean::parseBoolean).collect(Collectors.toList());
+
+                users = new HashMap<>(IntStream.range(0, toListUsers.size()).boxed().collect(Collectors.toMap(toListUsers::get, toListNotifications::get)));
+            } else {
+                users = new HashMap<>();
+            }
+
+            UserEvent event = new UserEvent(
+                    resultSet.getLong("ev_creator"),
+                    resultSet.getObject("ev_date", LocalDate.class),
+                    resultSet.getString("ev_name"));
+            event.setID(resultSet.getLong("id"));
+            event.setAttending(users);
+            events.add(event);
+
+        }
+
+        if (events.size() == 0) {
+            events = null;
+        }
+
         return events;
     }
 
@@ -270,21 +257,80 @@ public class EventDB implements IEventRepository {
 
     @Override
     public List<UserEvent> getBetweenDates(LocalDate start, LocalDate end) {
-        return null;
+        String sql = "SELECT E.event_id as id, ev_name, ev_date, ev_creator, COALESCE(string_agg(cast(user_id AS VARCHAR(100)), ','), '') as users, COALESCE(string_agg(cast(get_notifications AS VARCHAR(100)), ','), '') as notifications " +
+                "FROM public.events E LEFT OUTER JOIN public.event_users EU ON E.event_id=EU.event_id WHERE ev_date >= ? AND ev_date < ? " +
+                "GROUP BY E.event_id, ev_name, ev_date, ev_creator ORDER BY ev_date, E.event_id";
+        List<UserEvent> events;
+
+        try (Connection connection = dbUtils.getConnection()) {
+
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setDate(1, Date.valueOf(start));
+                statement.setDate(2, Date.valueOf(end));
+
+                ResultSet resultSet = statement.executeQuery();
+
+                events = processResultSet(resultSet);
+            } catch (SQLException throwable) {
+                System.out.println(throwable.getMessage());
+                events = null;
+            }
+        } catch (SQLException throwable) {
+            throwable.printStackTrace();
+            events = null;
+        }
+        return events;
     }
 
     @Override
     public List<UserEvent> getOnDate(LocalDate date) {
-        return null;
+        return getBetweenDates(date, date.plusDays(1));
     }
 
     @Override
     public List<UserEvent> getUserEvents(long userID) {
-        return null;
+        String sql = "SELECT E.event_id as id, ev_name, ev_date, ev_creator, COALESCE(string_agg(cast(user_id AS VARCHAR(100)), ','), '') as users, COALESCE(string_agg(cast(get_notifications AS VARCHAR(100)), ','), '') as notifications " +
+                "FROM public.events E LEFT OUTER JOIN public.event_users EU ON E.event_id=EU.event_id WHERE ev_creator = ? " +
+                "GROUP BY E.event_id, ev_name, ev_date, ev_creator ORDER BY ev_date, E.event_id";
+        List<UserEvent> events;
+
+        try (Connection connection = dbUtils.getConnection()) {
+
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setLong(1, userID);
+
+                ResultSet resultSet = statement.executeQuery();
+
+                events = processResultSet(resultSet);
+            } catch (SQLException throwable) {
+                System.out.println(throwable.getMessage());
+                events = null;
+            }
+        } catch (SQLException throwable) {
+            throwable.printStackTrace();
+            events = null;
+        }
+        return events;
     }
 
     @Override
-    public void changeSubscription(UserEvent event, long userID, boolean isSubscribed) {
+    public void setSubscription(UserEvent event, long userID, boolean isSubscribed) {
+        String sqlSetNotifications = "UPDATE event_users SET get_notifications = ? WHERE event_id = ? AND user_id = ?";
 
+        try (Connection connection = dbUtils.getConnection()) {
+
+            try (PreparedStatement setNotifications = connection.prepareStatement(sqlSetNotifications)) {
+                setNotifications.setBoolean(1, isSubscribed);
+                setNotifications.setLong(2, event.getID());
+                setNotifications.setLong(3, userID);
+
+                setNotifications.executeUpdate();
+            } catch (SQLException throwable) {
+                //System.out.println(throwable.getMessage());
+                throw new RepoException("EventElement BD fail" + throwable.getMessage());
+            }
+        } catch (SQLException throwable) {
+            throwable.printStackTrace();
+        }
     }
 }
