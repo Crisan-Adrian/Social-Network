@@ -1,7 +1,7 @@
 package service;
 
 import domain.Message;
-import repository.IRepository;
+import repository.message.IMessageRepository;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -14,9 +14,9 @@ public class MessageService implements IMessageService {
 
     //TODO: Comment code where necessary. Migrate functions doc to interface. Refactor if needed
 
-    IRepository<Long, Message> repoMessage;
+    IMessageRepository repoMessage;
 
-    public MessageService(IRepository<Long, Message> repoMessage) {
+    public MessageService(IMessageRepository repoMessage) {
         this.repoMessage = repoMessage;
     }
 
@@ -34,14 +34,7 @@ public class MessageService implements IMessageService {
 
     @Override
     public List<Message> getUserMessages(Long user) {
-        List<Message> messages = new LinkedList<>();
-
-        for (Message message : repoMessage.findAll()) {
-            if (message.getTo().contains(user)) {
-                messages.add(message);
-            }
-        }
-        return messages;
+        return repoMessage.getUserMessages(user);
     }
 
     @Override
