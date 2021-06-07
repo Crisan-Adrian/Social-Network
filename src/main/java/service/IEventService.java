@@ -5,7 +5,6 @@ import domain.UserEvent;
 import java.util.List;
 
 public interface IEventService {
-    //TODO: Add paged functions and fields for current paging in implementation.
 
     /**
      * Gets the first page of events using current paging information
@@ -57,9 +56,23 @@ public interface IEventService {
      */
     int getPageNumber();
 
+    /**
+     * Get the next page
+     * @return the page of events
+     * @throws exceptions.ServiceException if there is no next page or if paging information is not set
+     */
     List<UserEvent> getNextPage();
 
+    /**
+     * Get the previous page
+     * @return the page of events
+     * @throws exceptions.ServiceException if there is no previous page or if paging information is not set
+     */
     List<UserEvent> getPrevPage();
 
+    /**
+     * Save an event
+     * @param newEvent the event to save
+     */
     void save(UserEvent newEvent);
 }
