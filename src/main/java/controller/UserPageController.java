@@ -2,29 +2,21 @@ package controller;
 
 import domain.FriendshipDTO;
 import domain.User;
-import domain.UserEvent;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Insets;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import javafx.util.Pair;
 import service.*;
 import util.Observable;
 import util.Observer;
 
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class UserPageController extends Observer {
@@ -161,7 +153,7 @@ public class UserPageController extends Observer {
     public void loadReceivedRequests() {
         requestsRecv.getChildren().clear();
         int i = 0;
-        for (Long fromID : friendshipService.getUserFriendRequests(currentUser.getID())) {
+        for (Long fromID : friendshipService.getUserReceivedRequests(currentUser.getID())) {
             try {
                 FriendRequestReceived friendRequest = new FriendRequestReceived();
                 User from = userService.GetOne(fromID);
@@ -248,7 +240,7 @@ public class UserPageController extends Observer {
         }
         Platform.runLater(() -> {
             friendships = friendshipService.getUserFriendList(currentUser.getID()).stream().map(FriendshipDTO::getFriend).collect(Collectors.toList());
-            requestsR = friendshipService.getUserFriendRequests(currentUser.getID());
+            requestsR = friendshipService.getUserReceivedRequests(currentUser.getID());
             requestsS = friendshipService.getUserSentRequests(currentUser.getID());
             loadSentRequests();
             loadFriends();
@@ -333,7 +325,7 @@ public class UserPageController extends Observer {
         friendships = friendshipService.getUserFriendList(currentUser.getID()).stream()
                 .map(FriendshipDTO::getFriend).collect(Collectors.toList());
 
-        requestsR = friendshipService.getUserFriendRequests(currentUser.getID());
+        requestsR = friendshipService.getUserReceivedRequests(currentUser.getID());
         requestsS = friendshipService.getUserSentRequests(currentUser.getID());
 
 //        List<User> page = repo.getPageM();

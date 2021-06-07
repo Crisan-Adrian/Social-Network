@@ -6,12 +6,9 @@ import repository.friendship.IFriendshipRepository;
 
 import java.time.LocalDate;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class FriendshipService implements IFriendshipService {
-
-    //TODO: Comment code where necessary. Migrate functions doc to interface. Refactor if needed
 
     private final IFriendshipRepository repoFriendships;
     private final IFriendRequestRepository repoRequests;
@@ -21,16 +18,9 @@ public class FriendshipService implements IFriendshipService {
         this.repoRequests = repoRequests;
     }
 
-    /**
-     * Deletes the friendship between the users with the given ids
-     *
-     * @param id1 ID of the first user
-     * @param id2 ID of the second user
-     * @return the friendship if it was successfully deleted
-     * {@code null} if the friendship did not exist
-     */
+
     @Override
-    public Friendship deleteFriendship(Long id1, Long id2) {
+    public void deleteFriendship(Long id1, Long id2) {
         if (id1 > id2) {
             Long aux = id1;
             id1 = id2;
@@ -38,14 +28,10 @@ public class FriendshipService implements IFriendshipService {
         }
 
         LLTuple id = new LLTuple(id1, id2);
-        return repoFriendships.delete(id);
+        repoFriendships.delete(id);
     }
 
-    /**
-     * Deletes all of a users friendships
-     *
-     * @param id the user ID to delete from
-     */
+
     @Override
     public void deleteAllFriendships(Long id) {
         Iterable<Friendship> allFriendships = repoFriendships.findAll();
@@ -61,14 +47,6 @@ public class FriendshipService implements IFriendshipService {
         }
     }
 
-    /**
-     * Accepts a friendship between from a user
-     *
-     * @param user the user accepting
-     * @param from the sending user
-     * @return {@code null} if the friendship request does not exist or the users are already friends
-     * the friendship otherwise
-     */
     @Override
     public Friendship answerFriendshipRequest(Long user, Long from, FriendRequestStatus response) {
         FriendshipRequest request = repoRequests.findOne(new LLTuple(user, from));
@@ -94,8 +72,7 @@ public class FriendshipService implements IFriendshipService {
     }
 
     @Override
-    public void cancelFriendshipRequest(Long user, Long to)
-    {
+    public void cancelFriendshipRequest(Long user, Long to) {
         FriendshipRequest request = repoRequests.findOne(new LLTuple(to, user));
         if (request != null) {
             repoRequests.delete(new LLTuple(to, user));
@@ -103,7 +80,7 @@ public class FriendshipService implements IFriendshipService {
     }
 
     @Override
-    public FriendshipRequest sendFriendshipRequest(Long user, Long to) {
+    public void sendFriendshipRequest(Long user, Long to) {
         Long id1, id2;
         if (user > to) {
             id1 = to;
@@ -116,12 +93,11 @@ public class FriendshipService implements IFriendshipService {
         if (repoRequests.findOne(new LLTuple(to, user)) != null
                 || repoRequests.findOne(new LLTuple(user, to)) != null
                 || repoFriendships.findOne(new LLTuple(id1, id2)) != null) {
-            return null;
+            return;
         }
 
         FriendshipRequest friendshipRequest = new FriendshipRequest(user, to);
         repoRequests.save(friendshipRequest);
-        return friendshipRequest;
     }
 
     @Override
@@ -131,7 +107,7 @@ public class FriendshipService implements IFriendshipService {
     }
 
     @Override
-    public List<Long> getUserFriendRequests(Long user) {
+    public List<Long> getUserReceivedRequests(Long user) {
         Iterable<FriendshipRequest> requests = repoRequests.findAll();
         List<Long> usersRequesting = new LinkedList<>();
         for (FriendshipRequest request : requests) {
@@ -143,16 +119,11 @@ public class FriendshipService implements IFriendshipService {
     }
 
     @Override
-    public Iterable<FriendshipRequest> getAllRequests()
-    {
+    public Iterable<FriendshipRequest> getAllRequests() {
         return repoRequests.findAll();
     }
 
-    /**
-     * Determines the community with the longest friendship chain
-     *
-     * @return the IDs of the community members
-     */
+
     @Override
     public Iterable<Long> mostSociableCommunity() {
         // m^2
@@ -172,11 +143,6 @@ public class FriendshipService implements IFriendshipService {
         return getCommunityMembers(longestChainCommunity);
     }
 
-    /**
-     * Determines the number of existing communities
-     *
-     * @return the number of communities
-     */
     @Override
     public int getCommunitiesNumber() {
         return getCommunities().size();
@@ -299,7 +265,7 @@ public class FriendshipService implements IFriendshipService {
      * @param original original FriendMap
      * @return a deep copy of the FriendMap
      */
-    public static Map<Long, List<Long>> copy(HashMap<Long, List<Long>> original) {
+    private static Map<Long, List<Long>> copy(HashMap<Long, List<Long>> original) {
         HashMap<Long, List<Long>> copy = new HashMap<>();
         for (Map.Entry<Long, List<Long>> entry : original.entrySet()) {
             copy.put(entry.getKey(), new LinkedList<>(entry.getValue()));
@@ -339,11 +305,6 @@ public class FriendshipService implements IFriendshipService {
         return map;
     }
 
-    /**
-     * Gets all friendships
-     *
-     * @return all stored friendships
-     */
     @Override
     public Iterable<Friendship> getAllFriendships() {
         return repoFriendships.findAll();
@@ -368,27 +329,41 @@ public class FriendshipService implements IFriendshipService {
 
     public List<FriendshipDTO> getUserFriendsFromPeriod(Long userID, LocalDate start, LocalDate end) {
         List<Friendship> friendships = repoFriendships.getUserFriendsFromPeriod(userID, start, end);
-        // Transform to FriendshipDTO
-        return null;
+
+        return getFriendshipDTOS(userID, friendships);
     }
 
     @Override
     public List<FriendshipDTO> getUserFriendList(Long userID, int year, int month) {
-        Predicate<FriendshipDTO> isFromPeriod = friendshipDTO ->
-                friendshipDTO.getFriendedDate().getYear() == year
-                        && friendshipDTO.getFriendedDate().getMonth().getValue() == month;
+        List<Friendship> friendList = repoFriendships.getUserFriendsFromPeriod(userID, year, month);
 
-        List<FriendshipDTO> friendList = getUserFriendList(userID);
+        return getFriendshipDTOS(userID, friendList);
+    }
 
-        return friendList.stream().filter(isFromPeriod).collect(Collectors.toList());
+    private List<FriendshipDTO> getFriendshipDTOS(Long userID, List<Friendship> friendships) {
+        return friendships.stream().map(friendship -> {
+            long friend = getFriend(userID, friendship);
+
+            LocalDate friendedDate = friendship.getDate();
+
+            return new FriendshipDTO(friend, friendedDate);
+        }).collect(Collectors.toList());
+    }
+
+    private long getFriend(Long userID, Friendship friendship) {
+        if (friendship.getID().getLeft().equals(userID)) {
+            return friendship.getID().getRight();
+        } else {
+            return friendship.getID().getLeft();
+        }
     }
 
     @Override
-    public List<Long> getUserSentRequests(Long id) {
-        Iterable<FriendshipRequest> requests = repoRequests.findAll();
+    public List<Long> getUserSentRequests(Long user) {
+        Iterable<FriendshipRequest> requests = repoRequests.getUserSentRequests(user);
         List<Long> usersSent = new LinkedList<>();
         for (FriendshipRequest request : requests) {
-            if (request.getFrom().equals(id) && request.getStatus() == FriendRequestStatus.PENDING) {
+            if (request.getStatus() == FriendRequestStatus.PENDING) {
                 usersSent.add(request.getTo());
             }
         }
