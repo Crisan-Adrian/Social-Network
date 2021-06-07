@@ -25,18 +25,15 @@ public class EventDB implements IEventRepository {
     private final Validator<UserEvent> validator;
 
     //TODO: Comment code where necessary. Document functions. Refactor if needed
-    //TODO: Change to use generated IDs
     //TODO: Implement Functions
 
     private final JDBCUtils dbUtils;
 
-    private final int pageSize;
     private int page;
 
-    public EventDB(Validator<UserEvent> validator, Properties properties, int pageSize) {
+    public EventDB(Validator<UserEvent> validator, Properties properties) {
         this.dbUtils = new JDBCUtils(properties);
         this.validator = validator;
-        this.pageSize = pageSize;
         page = 0;
     }
 
@@ -152,7 +149,7 @@ public class EventDB implements IEventRepository {
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
 
             statement.setInt(1, pageSize);
-            statement.setInt(2, page * pageSize);
+            statement.setInt(2, pageNumber * pageSize);
 
             ResultSet resultSet = statement.executeQuery();
 

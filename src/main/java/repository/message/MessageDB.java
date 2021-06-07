@@ -18,7 +18,6 @@ public class MessageDB implements IMessageRepository {
     private final Validator<Message> validator;
 
     //TODO: Comment code where necessary. Document functions. Refactor if needed
-    //TODO: Change to use generated IDs
 
     public MessageDB(Validator<Message> validator, Properties properties) {
         dbUtils = new JDBCUtils(properties);

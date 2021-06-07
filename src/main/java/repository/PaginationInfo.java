@@ -1,11 +1,11 @@
 package repository;
 
-import java.util.Dictionary;
+import java.util.Map;
 
 public class PaginationInfo {
     private int pageSize;
     private int pageNumber;
-    private Dictionary<String, Object> matcher;
+    private Map<String, String> matcher;
 
     public PaginationInfo() {
         pageSize = 1;
@@ -29,11 +29,11 @@ public class PaginationInfo {
         this.pageNumber = pageNumber;
     }
 
-    public Dictionary<String, Object> getMatcher() {
+    public Map<String, String> getMatcher() {
         return matcher;
     }
 
-    public void setMatcher(Dictionary<String, Object> matcher) {
+    public void setMatcher(Map<String, String> matcher) {
         this.matcher = matcher;
     }
 }

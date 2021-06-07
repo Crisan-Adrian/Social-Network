@@ -1,5 +1,7 @@
 package repository;
 
+import java.util.Map;
+
 public class PaginationInfoBuilder {
     private PaginationInfo paginationInfo;
 
@@ -17,7 +19,7 @@ public class PaginationInfoBuilder {
         return this;
     }
 
-    public PaginationInfoBuilder setMatcher(String matcher) {
+    public PaginationInfoBuilder setMatcher(Map<String, String> matcher) {
         paginationInfo.setMatcher(matcher);
         return this;
     }

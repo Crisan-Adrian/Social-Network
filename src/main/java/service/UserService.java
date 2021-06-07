@@ -73,15 +73,15 @@ public class UserService implements IUserService {
 
     @Override
     public User FindUserByEmail(String email) {
-        List<User> page = repo.getFirstPage();
-        do {
-            for (User u : page) {
-                if (u.getEmail().equals(email)) {
-                    return u;
-                }
-            }
-            page = repo.getNextPage();
-        } while (repo.hasNextPage());
+//        List<User> page = repo.getFirstPage();
+//        do {
+//            for (User u : page) {
+//                if (u.getEmail().equals(email)) {
+//                    return u;
+//                }
+//            }
+//            page = repo.getNextPage();
+//        } while (repo.hasNextPage());
         return null;
     }
 }

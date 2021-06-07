@@ -34,11 +34,11 @@ public class MainFX extends Application {
             return;
         }
 
-        IUserRepository userRepository = new UserDB(new UserValidator(), properties, 10);
+        IUserRepository userRepository = new UserDB(new UserValidator(), properties);
         IFriendshipRepository friendshipRepository = new FriendshipDB(new FriendshipValidator(), properties);
         IFriendRequestRepository friendRequestRepository = new FriendshipRequestDB(new FriendRequestValidator(), properties);
         IMessageRepository messageRepository = new MessageDB(new MessageValidator(), properties);
-        IEventRepository eventRepository = new EventDB(new EventValidator(), properties, 10);
+        IEventRepository eventRepository = new EventDB(new EventValidator(), properties);
 
         IFriendshipService friendshipService = new FriendshipService(friendshipRepository, friendRequestRepository);
         IUserService userService = new UserService(userRepository);
