@@ -12,8 +12,6 @@ import java.util.List;
 
 public class MessageService implements IMessageService {
 
-    //TODO: Comment code where necessary. Migrate functions doc to interface. Refactor if needed
-
     IMessageRepository repoMessage;
 
     public MessageService(IMessageRepository repoMessage) {
@@ -38,7 +36,7 @@ public class MessageService implements IMessageService {
     }
 
     @Override
-    public List<String> getUsersConversations(List<Long> members) {
+    public List<String> getUsersConversation(List<Long> members) {
         List<Message> messages = (List<Message>) repoMessage.findAll();
         List<String> conversation = new LinkedList<>();
 
@@ -78,7 +76,7 @@ public class MessageService implements IMessageService {
     }
 
     @Override
-    public List<Message> getUsersConversationsM(List<Long> members) {
+    public List<Message> getUsersConversationMessages(List<Long> members) {
         List<Message> messages = (List<Message>) repoMessage.findAll();
         List<Message> conversation = new LinkedList<>();
 

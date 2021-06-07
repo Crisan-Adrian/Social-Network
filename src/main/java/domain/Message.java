@@ -8,6 +8,7 @@ public class Message extends Entity<Long> {
     List<Long> to;
     String message;
     LocalDateTime timestamp;
+    Long reply;
 
     public Long getReply() {
         return reply;
@@ -16,8 +17,6 @@ public class Message extends Entity<Long> {
     public void setReply(Long reply) {
         this.reply = reply;
     }
-
-    Long reply;
 
     public Message(Long from, List<Long> to, String message, LocalDateTime timestamp) {
         this.from = from;

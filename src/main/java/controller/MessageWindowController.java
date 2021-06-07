@@ -11,8 +11,6 @@ import domain.Message;
 import domain.User;
 import service.IMessageService;
 import service.IUserService;
-import service.MessageService;
-import service.UserService;
 
 import java.time.LocalDateTime;
 import java.util.LinkedList;
@@ -55,7 +53,7 @@ public class MessageWindowController {
 
     private void loadMessages() {
         messageBox.getChildren().clear();
-        for (Message m : messageService.getUsersConversationsM(members)) {
+        for (Message m : messageService.getUsersConversationMessages(members)) {
             addMessage(m);
         }
     }
