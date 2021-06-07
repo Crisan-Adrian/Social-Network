@@ -6,6 +6,7 @@ import exceptions.UnknownUserException;
 import java.util.List;
 
 public interface IUserService {
+    //TODO: Add paged functions and fields for current paging in implementation.
 
     /**
      * Adds a user
@@ -67,4 +68,5 @@ public interface IUserService {
      * {@code null} if the user does not exist
      */
     User FindUserByEmail(String email);
+
 }

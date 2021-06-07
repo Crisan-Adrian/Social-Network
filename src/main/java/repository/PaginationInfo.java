@@ -36,4 +36,12 @@ public class PaginationInfo {
     public void setMatcher(Map<String, String> matcher) {
         this.matcher = matcher;
     }
+
+    public void incrementPageNumber() {
+        pageNumber++;
+    }
+
+    public void decrementPageNumber() {
+        pageNumber--;
+    }
 }
