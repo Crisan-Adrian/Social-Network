@@ -129,6 +129,7 @@ public class MainPageController {
 
 
             Scene scene = new Scene(root, 800, 700);
+            scene.getStylesheets().add("/stylesheets/userPage.css");
             stage.setScene(scene);
 
         } catch (IOException e) {

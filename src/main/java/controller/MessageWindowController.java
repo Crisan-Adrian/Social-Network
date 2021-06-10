@@ -17,45 +17,64 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class MessageWindowController {
-
-    //TODO: Comment code where necessary. Document functions. Refactor if needed
-
-
     @FXML
-    public ScrollPane scroll;
+    private ScrollPane scroll;
     @FXML
-    public VBox messageBox;
+    private VBox messageBox;
     @FXML
-    public TextArea messageText;
+    private TextArea messageText;
     @FXML
-    public Label user;
+    private Label user;
 
-    IMessageService messageService;
-    IUserService userService;
+    private IMessageService messageService;
+    private IUserService userService;
     private User friendUser;
     private User currentUser;
-    List<Long> members;
+    private List<Long> members;
+    private boolean isGroup;
 
     public void setup(IMessageService messageService, IUserService userService, User currentUser, User friendUser) {
         this.messageService = messageService;
         this.userService = userService;
         this.currentUser = currentUser;
         this.friendUser = friendUser;
-        this.members = new LinkedList<>();
+        this.isGroup = false;
 
+        this.members = new LinkedList<>();
         members.add(friendUser.getID());
-        members.add(currentUser.getID());
-        System.out.println("YO!");
+
         scroll.vvalueProperty().bind(messageBox.heightProperty());
-        user.setText(friendUser.getFirstName() + " " + friendUser.getLastName());
+        loadTitle();
         loadMessages();
+    }
+
+    public void setup(IMessageService messageService, IUserService userService, User currentUser, List<Long> members) {
+        this.messageService = messageService;
+        this.userService = userService;
+        this.currentUser = currentUser;
+        this.members = members;
+        this.isGroup = true;
+
+        scroll.vvalueProperty().bind(messageBox.heightProperty());
+        loadTitle();
+        loadMessages();
+    }
+
+    private void loadTitle() {
+        if(isGroup) {
+            user.setText("Group Conversation");
+        } else {
+            user.setText(friendUser.getFirstName() + " " + friendUser.getLastName());
+        }
     }
 
     private void loadMessages() {
         messageBox.getChildren().clear();
+        members.add(currentUser.getID());
         for (Message m : messageService.getUsersConversationMessages(members)) {
             addMessage(m);
         }
+        members.remove(currentUser.getID());
     }
 
     public void sendMessageE(KeyEvent event) {
@@ -66,8 +85,6 @@ public class MessageWindowController {
 
     public void sendMessage() {
         if (!messageText.getText().equals("")) {
-            List<Long> members = new LinkedList<>();
-            members.add(friendUser.getID());
             Message message = messageService.sendMessage(currentUser.getID(), members, messageText.getText(), LocalDateTime.now());
             messageText.clear();
             addMessage(message);

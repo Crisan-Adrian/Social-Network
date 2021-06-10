@@ -6,6 +6,11 @@
     -fx-text-fill: #dbdbdb;
 }
 
+.my-text {
+    -fx-text-fill: #dbdbdb;
+    -fx-fill: #dbdbdb;
+}
+
 .split-pane:horizontal > .split-pane-divider {
     -fx-background-color: transparent;
 }

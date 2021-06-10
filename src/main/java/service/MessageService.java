@@ -105,6 +105,9 @@ public class MessageService implements IMessageService {
         for (Message message : messages) {
             List<Long> members = message.getTo();
             members.add(message.getFrom());
+            if(!members.contains(id)) {
+                continue;
+            }
             if (!foundGroup(groups, members) && members.size() > 2) {
                 groups.add(members);
             }

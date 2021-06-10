@@ -5,7 +5,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Label;
 import domain.User;
 import javafx.scene.layout.AnchorPane;
-import service.FriendshipService;
 import service.IFriendshipService;
 import util.Observable;
 import util.Observer;
@@ -15,10 +14,9 @@ import java.io.IOException;
 
 public class FriendRequestSent extends AnchorPane implements Observable {
 
-    //TODO: Comment code where necessary. Document functions. Refactor if needed
-
     @FXML
     private Label to;
+
     private User user;
     private User toUser;
     private IFriendshipService service;

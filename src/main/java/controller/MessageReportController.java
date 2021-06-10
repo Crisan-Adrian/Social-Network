@@ -3,6 +3,7 @@ package controller;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfWriter;
 import javafx.application.Platform;
+import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
@@ -21,11 +22,11 @@ import java.util.LinkedList;
 
 public class MessageReportController {
 
-    //TODO: Comment code where necessary. Document functions. Refactor if needed
+    @FXML
+    private TextArea text;
+    @FXML
+    private BarChart chart;
 
-
-    public TextArea text;
-    public BarChart chart;
     private IMessageService messageService;
     private IUserService userService;
     private IFriendshipService friendshipsService;
@@ -36,7 +37,7 @@ public class MessageReportController {
     String log;
 
     public void load() {
-        log = "";
+        StringBuilder logBuilder = new StringBuilder();
         final CategoryAxis xAxis = new CategoryAxis();
         final NumberAxis yAxis = new NumberAxis();
 
@@ -60,12 +61,13 @@ public class MessageReportController {
                     dayOfWeek[current.getDayOfWeek().getValue() - 1]++;
                     messagesRecv++;
                     toRemove.add(m);
-                    log += m.getTimestamp().toLocalDate().toString() + " - " + m.getMessage().replace("\n", "") + "\n";
+                    logBuilder.append(m.getTimestamp().toLocalDate().toString()).append(" - ").append(m.getMessage().replace("\n", "")).append("\n");
                 }
             }
             messageList.removeAll(toRemove);
-            if (messagesRecv != 0)
-                log += current.toString() + " - Day activities: " + messagesRecv + " messages received.\n\n";
+            if (messagesRecv != 0) {
+                logBuilder.append(current).append(" - Day activities: ").append(messagesRecv).append(" messages received.\n\n");
+            }
 
             current = current.plusDays(1);
         }
@@ -85,6 +87,7 @@ public class MessageReportController {
             }
         };
         Platform.runLater(r);
+        log = logBuilder.toString();
         chart.setBarGap(1);
         chart.setCategoryGap(0);
         chart.setPrefWidth(400);
@@ -107,7 +110,6 @@ public class MessageReportController {
         paragraph = new Paragraph(log, font);
         document.add(paragraph);
         document.close();
-        log = "";
     }
 
     public void setup(IMessageService messageService, IUserService userService, IFriendshipService friendshipService, User currentUser, LocalDate start, LocalDate end, User friendTarget) {

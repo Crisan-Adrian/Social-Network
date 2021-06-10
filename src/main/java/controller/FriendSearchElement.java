@@ -14,13 +14,11 @@ import util.ObserverManager;
 import java.io.IOException;
 
 public class FriendSearchElement extends AnchorPane implements Observable {
-
-    //TODO: Comment code where necessary. Document functions. Refactor if needed
-
     @FXML
     private Label searchedUser;
     @FXML
     private Button button;
+
     User user;
     User searchUser;
     IFriendshipService service;

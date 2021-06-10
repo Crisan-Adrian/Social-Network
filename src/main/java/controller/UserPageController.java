@@ -113,13 +113,13 @@ public class UserPageController extends Observer {
     public void initialLoad() {
         loadReceivedRequests();
         loadFriends();
+        loadGroups();
         loadSentRequests();
         loadEvents(eventService.getFirstPage());
         search();
 
         Platform.runLater(this::showNotifications);
     }
-
     public void logout() {
         Stage stage = (Stage) logout.getScene().getWindow();
         FXMLLoader loader = new FXMLLoader();
@@ -355,27 +355,48 @@ public class UserPageController extends Observer {
 
     public void activateCheck() {
         friendsPane.setExpanded(true);
-        friends.getChildren().forEach(element -> ((FriendElement)element).setCheckVisible(true));
+        friends.getChildren().forEach(element -> ((FriendElement) element).setCheckVisible(true));
         activateCheck.setVisible(false);
         createGroup.setVisible(true);
     }
 
     public void createGroup() {
         List<Long> members = new LinkedList<>();
-        members.add(currentUser.getID());
         friends.getChildren().forEach(k -> {
-            FriendElement e = (FriendElement)k;
+            FriendElement e = (FriendElement) k;
             e.setCheckVisible(false);
             if (e.getCheck()) {
-                members.add(e.friendUser.getID());
+                members.add(e.getFriendID());
             }
         });
-        if (members.size() > 2) {
-            groups.getChildren().add(new Label(members.toString()));
+        if (members.size() > 1) {
+            MessageGroupElement messageGroup = CreateGroupElement(members);
+            Platform.runLater(() -> {
+                try {
+                    messageGroup.message();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
         }
-        System.out.println(members);
         activateCheck.setVisible(true);
         createGroup.setVisible(false);
+    }
+
+    private MessageGroupElement CreateGroupElement(List<Long> members) {
+        MessageGroupElement messageGroup = new MessageGroupElement();
+        messageGroup.setup(currentUser, members, userService, messageService);
+        groups.getChildren().add(messageGroup);
+        return messageGroup;
+    }
+
+    private void loadGroups() {
+        List<List<Long>> groups = messageService.getGroups(currentUser.getID());
+
+        for(List<Long> group : groups) {
+            group.remove(currentUser.getID());
+            CreateGroupElement(group);
+        }
     }
 
     public void activityReport() throws IOException {
@@ -685,7 +706,7 @@ public class UserPageController extends Observer {
                     }
                 }
             }
-            if(eventService.hasNextPage()) {
+            if (eventService.hasNextPage()) {
                 temp = eventService.getNextPage();
             }
         } while (eventService.hasNextPage());

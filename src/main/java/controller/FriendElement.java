@@ -20,23 +20,20 @@ import java.io.IOException;
 import java.util.Optional;
 
 public class FriendElement extends AnchorPane implements Observable {
-
-    //TODO: Comment code where necessary. Document functions. Refactor if needed
-
-    User user;
-    User friendUser;
-    IFriendshipService service;
-    IMessageService messageService;
-    IUserService userService;
-    Boolean openedMessageWindow;
-    Stage messageWindow;
-
     private final ObserverManager manager = new ObserverManager();
 
     @FXML
     private Label userName;
     @FXML
     private CheckBox check;
+
+    private User user;
+    private User friendUser;
+    private IFriendshipService service;
+    private IMessageService messageService;
+    private IUserService userService;
+    private Boolean openedMessageWindow;
+    private Stage messageWindow;
 
     public FriendElement() {
         FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource(
@@ -112,6 +109,10 @@ public class FriendElement extends AnchorPane implements Observable {
         openedMessageWindow = false;
         messageWindow = null;
         System.out.println("Closed!");
+    }
+
+    public Long getFriendID() {
+        return friendUser.getID();
     }
 
     public void setCheckVisible(boolean b) {
