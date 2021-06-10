@@ -65,9 +65,11 @@ public class FriendElement extends AnchorPane implements Observable {
         alert.setContentText("Do you want to delete friend?");
 
         Optional<ButtonType> result = alert.showAndWait();
-        if (((Optional<?>) result).get() == ButtonType.OK) {
-            service.deleteFriendship(user.getID(), friendUser.getID());
-            NotifyObservers();
+        if(result.isPresent()) {
+            if (result.get() == ButtonType.OK) {
+                service.deleteFriendship(user.getID(), friendUser.getID());
+                NotifyObservers();
+            }
         }
     }
 
