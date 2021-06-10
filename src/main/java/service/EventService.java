@@ -1,5 +1,6 @@
 package service;
 
+import domain.User;
 import domain.UserEvent;
 import exceptions.ServiceException;
 import repository.PaginationInfo;
@@ -42,7 +43,7 @@ public class EventService implements IEventService {
 
     @Override
     public boolean hasNextPage() {
-        return paginationInfo.getPageNumber() < eventRepository.getPageCount(paginationInfo);
+        return paginationInfo.getPageNumber() < (eventRepository.getPageCount(paginationInfo) - 1);
     }
 
     @Override
@@ -52,7 +53,7 @@ public class EventService implements IEventService {
 
     @Override
     public List<UserEvent> getNextPage() {
-        if (hasPrevPage()) {
+        if (hasNextPage()) {
             paginationInfo.incrementPageNumber();
             return eventRepository.getPage(paginationInfo);
         }
@@ -71,5 +72,31 @@ public class EventService implements IEventService {
     @Override
     public void save(UserEvent newEvent) {
         eventRepository.save(newEvent);
+    }
+
+    @Override
+    public UserEvent changeNotificationState(User user, UserEvent event, boolean isNotified) {
+        if(isNotified){
+            event.subscribe(user.getID());
+        } else {
+            event.unsubscribe(user.getID());
+        }
+        eventRepository.setSubscription(event, user.getID(), isNotified);
+        return event;
+    }
+
+    @Override
+    public UserEvent changeAttendance(User user, UserEvent event, boolean isAttending) {
+        if(isAttending){
+            event.addAttending(user.getID());
+        } else {
+            event.removeAttending(user.getID());
+        }
+        if(eventRepository.update(event) != null) {
+            return event;
+        }
+        else {
+            throw new ServiceException("Error updating event");
+        }
     }
 }

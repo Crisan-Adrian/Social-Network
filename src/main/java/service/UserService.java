@@ -1,18 +1,25 @@
 package service;
 
 import domain.User;
+import exceptions.ServiceException;
 import exceptions.UnknownUserException;
+import repository.PaginationInfo;
+import repository.PaginationInfoBuilder;
 import repository.user.IUserRepository;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public class UserService implements IUserService {
 
     private final IUserRepository repo;
+    private final PaginationInfo paginationInfo;
 
     public UserService(IUserRepository repo) {
         this.repo = repo;
+        paginationInfo = new PaginationInfoBuilder().create().setPageSize(10).setPageNumber(0).build();
+
     }
 
     @Override
@@ -75,4 +82,65 @@ public class UserService implements IUserService {
     public User FindUserByEmail(String email) {
         return repo.findByEmail(email);
     }
+
+    @Override
+    public List<User> getFirstPage() {
+        paginationInfo.setPageNumber(0);
+        return repo.getPage(paginationInfo);
+    }
+
+    @Override
+    public List<User> getPage(int pageNumber) {
+        paginationInfo.setPageNumber(pageNumber);
+        return repo.getPage(paginationInfo);
+    }
+
+    @Override
+    public int getPageCount() {
+        return repo.getPageCount(paginationInfo);
+    }
+
+    @Override
+    public boolean hasPrevPage() {
+        return paginationInfo.getPageNumber() > 0;
+    }
+
+    @Override
+    public boolean hasNextPage() {
+        return paginationInfo.getPageNumber() < (repo.getPageCount(paginationInfo) - 1);
+    }
+
+    @Override
+    public int getPageNumber() {
+        return paginationInfo.getPageNumber();
+    }
+
+    @Override
+    public List<User> getPrevPage() {
+        if (hasPrevPage()) {
+            paginationInfo.decrementPageNumber();
+            return repo.getPage(paginationInfo);
+        }
+        throw new ServiceException("There is no previous page");
+    }
+
+    @Override
+    public List<User> getNextPage() {
+        if (hasNextPage()) {
+            paginationInfo.incrementPageNumber();
+            return repo.getPage(paginationInfo);
+        }
+        throw new ServiceException("There is no next page");
+    }
+
+    @Override
+    public void setMatcher(Map<String, String> matcher) {
+        paginationInfo.setMatcher(matcher);
+        if(!repo.validateMatcher(paginationInfo)){
+            paginationInfo.setMatcher(null);
+            throw new ServiceException("Invalid matcher");
+        }
+    }
+
+
 }

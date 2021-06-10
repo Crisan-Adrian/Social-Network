@@ -17,10 +17,11 @@ public class FriendRequestSent extends AnchorPane implements Observable {
 
     //TODO: Comment code where necessary. Document functions. Refactor if needed
 
-    public Label to;
-    User user;
-    User toUser;
-    IFriendshipService service;
+    @FXML
+    private Label to;
+    private User user;
+    private User toUser;
+    private IFriendshipService service;
 
     private final ObserverManager manager = new ObserverManager();
 

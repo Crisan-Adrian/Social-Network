@@ -7,7 +7,7 @@ import javafx.scene.control.Label;
 import domain.User;
 import domain.UserEvent;
 import javafx.scene.layout.AnchorPane;
-import repository.event.IEventRepository;
+import service.IEventService;
 import util.Observable;
 import util.Observer;
 import util.ObserverManager;
@@ -16,14 +16,18 @@ import java.io.IOException;
 
 public class EventElement extends AnchorPane implements Observable {
 
-    //TODO: Comment code where necessary. Document functions. Refactor if needed
+    @FXML
+    private Button sub;
+    @FXML
+    private Button unsub;
+    @FXML
+    private Label eventName;
+    @FXML
+    private Button button;
 
-    public Button sub;
-    public Button unsub;
-    public Label eventName;
-    public Button button;
-    UserEvent event;
-    User currentUser;
+    private IEventService service;
+    private UserEvent event;
+    private User currentUser;
     boolean state;
 
     private final ObserverManager manager = new ObserverManager();
@@ -41,10 +45,10 @@ public class EventElement extends AnchorPane implements Observable {
         }
     }
 
-    public void setUp(UserEvent e, User u) {
+    public void setup(UserEvent e, User u, IEventService service) {
         event = e;
         currentUser = u;
-//        this.repo = repo;
+        this.service = service;
         if (e.getAttending().get(u.getID()) == null) {
             state = false;
         } else {
@@ -76,16 +80,15 @@ public class EventElement extends AnchorPane implements Observable {
         sub.setVisible(false);
         state = true;
         button.setVisible(true);
-//        repo.update(event);
+        event = service.changeAttendance(currentUser, event, true);
     }
 
     @FXML
     protected void unsubscribe() {
-        event.removeAttending(currentUser.getID());
         unsub.setVisible(false);
         sub.setVisible(true);
         button.setVisible(false);
-//        repo.update(event);
+        event = service.changeAttendance(currentUser, event, false);
     }
 
     @FXML
@@ -94,13 +97,11 @@ public class EventElement extends AnchorPane implements Observable {
         if (state) {
             // &#128276;
             button.setText("\uD83D\uDD14");
-            event.subscribe(currentUser.getID());
         } else {
             // &#128277;
             button.setText("\uD83D\uDD15");
-            event.unsubscribe(currentUser.getID());
         }
-//        repo.update(event);
+        event = service.changeNotificationState(currentUser, event, state);
     }
 
     public void NotifyObservers()

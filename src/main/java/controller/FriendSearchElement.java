@@ -17,9 +17,10 @@ public class FriendSearchElement extends AnchorPane implements Observable {
 
     //TODO: Comment code where necessary. Document functions. Refactor if needed
 
-
-    public Label searchedUser;
-    public Button button;
+    @FXML
+    private Label searchedUser;
+    @FXML
+    private Button button;
     User user;
     User searchUser;
     IFriendshipService service;
@@ -43,12 +44,10 @@ public class FriendSearchElement extends AnchorPane implements Observable {
         this.user = currentUser;
         this.searchUser = friendUser;
         this.service = friendshipService;
-
-        loadElement();
-    }
-
-    private void loadElement() {
-        searchedUser.setText(searchUser.getFirstName() + " " + searchUser.getLastName() + " (" + searchUser.getEmail() + ")");
+        searchedUser.setText(
+                searchUser.getFirstName() + " " +
+                searchUser.getLastName() + " (" +
+                searchUser.getEmail() + ")");
     }
 
     @FXML

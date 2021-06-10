@@ -28,7 +28,7 @@ public class MainFX extends Application {
 
         Properties properties = new Properties();
         try {
-            properties.load(MainFX.class.getResourceAsStream("/server.properties"));
+            properties.load(MainFX.class.getResourceAsStream("/config.properties"));
         } catch (IOException e) {
             System.err.println("Cannot find properties " + e);
             return;

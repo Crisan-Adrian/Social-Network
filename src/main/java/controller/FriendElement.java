@@ -34,7 +34,7 @@ public class FriendElement extends AnchorPane implements Observable {
     private final ObserverManager manager = new ObserverManager();
 
     @FXML
-    private Label from;
+    private Label userName;
     @FXML
     private CheckBox check;
 
@@ -58,12 +58,7 @@ public class FriendElement extends AnchorPane implements Observable {
         this.messageService = messageService;
         this.userService = userService;
         openedMessageWindow = false;
-
-        loadElement();
-    }
-
-    private void loadElement() {
-        from.setText(friendUser.getFirstName() + " " + friendUser.getLastName());
+        userName.setText(friendUser.getFirstName() + " " + friendUser.getLastName());
     }
 
     @FXML

@@ -17,10 +17,11 @@ import java.io.IOException;
 public class FriendRequestReceived extends AnchorPane implements Observable {
     //TODO: Comment code where necessary. Document functions. Refactor if needed
 
-    public Label from;
-    User user;
-    User fromUser;
-    IFriendshipService service;
+    @FXML
+    private Label from;
+    private User user;
+    private User fromUser;
+    private IFriendshipService service;
 
     private final ObserverManager manager = new ObserverManager();
 
@@ -42,11 +43,10 @@ public class FriendRequestReceived extends AnchorPane implements Observable {
         this.fromUser = from;
         this.service = friendshipService;
 
-        loadElement();
-    }
-
-    private void loadElement() {
-        from.setText(fromUser.getFirstName() + " " + fromUser.getLastName() + " \n(" + fromUser.getEmail() + ")");
+        this.from.setText(
+                fromUser.getFirstName() + " " +
+                fromUser.getLastName() + " \n(" +
+                fromUser.getEmail() + ")");
     }
 
     @FXML
@@ -60,7 +60,6 @@ public class FriendRequestReceived extends AnchorPane implements Observable {
         service.answerFriendshipRequest(user.getID(), fromUser.getID(), FriendRequestStatus.ACCEPTED);
         NotifyObservers();
     }
-
 
     public void NotifyObservers()
     {

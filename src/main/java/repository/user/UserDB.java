@@ -9,6 +9,7 @@ import repository.PagingUtils;
 
 import java.sql.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class UserDB implements IUserRepository {
 
@@ -84,9 +85,9 @@ public class UserDB implements IUserRepository {
         }
         int matchersNo = matchParams.size();
         String matchers = PagingUtils.buildMatcher(matchParams.keySet());
-        List<String> matchValues = (List<String>) matchParams.values();
+        List<String> matchValues = matchParams.keySet().stream().map(matchParams::get).collect(Collectors.toList());
 
-        String sql = "SELECT * FROM public.users ORDER BY lastname, firstname, email " + matchers + " LIMIT ? OFFSET ?";
+        String sql = "SELECT * FROM public.users " + matchers + " ORDER BY lastname, firstname, email LIMIT ? OFFSET ?";
         int pageSize = paginationInfo.getPageSize();
         int pageNumber = paginationInfo.getPageNumber();
 
@@ -134,7 +135,7 @@ public class UserDB implements IUserRepository {
         int temp;
 
         int pageSize = paginationInfo.getPageSize();
-        if(pageSize > 1) {
+        if (pageSize < 1) {
             throw new RepoException("Invalid pageSize or pageNumber");
         }
 
@@ -144,7 +145,7 @@ public class UserDB implements IUserRepository {
         }
         int matchersNo = matchParams.size();
         String matchers = PagingUtils.buildMatcher(matchParams.keySet());
-        List<String> matchValues = (List<String>) matchParams.values();
+        List<String> matchValues = matchParams.keySet().stream().map(matchParams::get).collect(Collectors.toList());
 
         String sql = "SELECT COUNT(id) as count FROM public.users " + matchers;
 
@@ -176,11 +177,16 @@ public class UserDB implements IUserRepository {
         return pageCount;
     }
 
+    @Override
+    public boolean validateMatcher(PaginationInfo paginationInfo) {
+        return PagingUtils.validateMatchers(paginationInfo.getMatcher(), validMatchKeys);
+    }
+
     // -----------------------------------------------------------------------------------------------------------------
 
     public User save(User entity) {
         validator.validate(entity);
-        User resultUser = findOne(entity.getID());
+        User resultUser = findByEmail(entity.getEmail());
         if (resultUser == null) {
             String sql = "INSERT INTO users(firstname, lastName, email, password, salt)" +
                     " VALUES(?, ?, ?, ?, ?) RETURNING id";
@@ -198,6 +204,7 @@ public class UserDB implements IUserRepository {
                     long id = rs.getLong(1);
                     entity.setID(id);
                 } catch (SQLException throwable) {
+                    throwable.printStackTrace();
                     return entity;
                 }
             } catch (SQLException throwable) {
@@ -231,7 +238,7 @@ public class UserDB implements IUserRepository {
 
     @Override
     public User findByEmail(String email) {
-        String sql = "SELECT * FROM public.users WHERE email=?";
+        String sql = "SELECT * FROM public.users WHERE email LIKE ?";
 
         try (Connection connection = dbUtils.getConnection()) {
 
@@ -243,7 +250,9 @@ public class UserDB implements IUserRepository {
                 User resultUser = new User(
                         result.getString("firstName"),
                         result.getString("lastName"),
-                        result.getString("email"));
+                        result.getString("email"),
+                        result.getString("salt"),
+                        result.getString("password"));
                 resultUser.setID(result.getLong("id"));
                 return resultUser;
             } catch (SQLException throwable) {

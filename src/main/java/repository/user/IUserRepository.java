@@ -34,4 +34,6 @@ public interface IUserRepository extends IRepository<Long, User> {
      */
     int getPageCount(PaginationInfo paginationInfo);
 
+    boolean validateMatcher(PaginationInfo paginationInfo);
+
 }

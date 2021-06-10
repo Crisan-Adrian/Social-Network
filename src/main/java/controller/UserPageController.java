@@ -24,16 +24,10 @@ import util.Observer;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class UserPageController extends Observer {
-
-    //TODO: Comment code where necessary. Document functions. Refactor if needed. Remove repo calls from controller
-
-
     @FXML
     private Button activateCheck;
     @FXML
@@ -41,19 +35,13 @@ public class UserPageController extends Observer {
     @FXML
     private TitledPane friendsPane;
     @FXML
-    private Accordion accordion;
-    @FXML
     private VBox groups;
-    @FXML
-    private Button activity;
     @FXML
     private VBox searchResults;
     @FXML
     private Button prevPage;
     @FXML
     private Button nextPage;
-    @FXML
-    private VBox events;
     @FXML
     private TextField pageNumberSelector;
     @FXML
@@ -73,23 +61,6 @@ public class UserPageController extends Observer {
     @FXML
     private Button nextPageE;
     @FXML
-    private TabPane tabPane;
-    @FXML
-    private SplitPane split;
-    @FXML
-    private Accordion accordion2;
-
-    private User currentUser;
-    private IUserService userService;
-    private IFriendshipService friendshipService;
-    private IMessageService messageService;
-    private IEventService eventService;
-
-    private List<Long> friendships;
-    private List<Long> requestsR;
-    private List<Long> requestsS;
-
-    @FXML
     private Button logout;
     @FXML
     private VBox requestsRecv;
@@ -103,6 +74,16 @@ public class UserPageController extends Observer {
     private Button searchButton;
     @FXML
     private Label userGreeting;
+
+    private User currentUser;
+    private IUserService userService;
+    private IFriendshipService friendshipService;
+    private IMessageService messageService;
+    private IEventService eventService;
+
+    private List<Long> friendships;
+    private List<Long> requestsR;
+    private List<Long> requestsS;
 
     @FXML
     public void initialize() {
@@ -215,6 +196,18 @@ public class UserPageController extends Observer {
 
     @Override
     public void update(Observable o) {
+        updateUIContainers(o);
+        Platform.runLater(() -> {
+            friendships = friendshipService.getUserFriendList(currentUser.getID()).stream().map(FriendshipDTO::getFriend).collect(Collectors.toList());
+            requestsR = friendshipService.getUserReceivedRequests(currentUser.getID());
+            requestsS = friendshipService.getUserSentRequests(currentUser.getID());
+            loadSentRequests();
+            loadFriends();
+            loadReceivedRequests();
+        });
+    }
+
+    private void updateUIContainers(Observable o) {
         boolean found = false;
         if (o instanceof FriendRequestReceived) {
             if (requestsRecv.getChildren().remove(o)) {
@@ -237,14 +230,6 @@ public class UserPageController extends Observer {
                 ((FriendSearchElement) o).setDisable(true);
             }
         }
-        Platform.runLater(() -> {
-            friendships = friendshipService.getUserFriendList(currentUser.getID()).stream().map(FriendshipDTO::getFriend).collect(Collectors.toList());
-            requestsR = friendshipService.getUserReceivedRequests(currentUser.getID());
-            requestsS = friendshipService.getUserSentRequests(currentUser.getID());
-            loadSentRequests();
-            loadFriends();
-            loadReceivedRequests();
-        });
     }
 
     public void loadPage(List<User> page) {
@@ -255,53 +240,15 @@ public class UserPageController extends Observer {
         } else {
             try {
                 for (User user : page) {
-                    if (friendships.contains(user.getID())) {
-                        // Load friend element
-
-                        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/customElements/friend/friendElement.fxml"));
-                        AnchorPane friend = fxmlLoader.load();
-                        FriendElement friendElement = new FriendElement();
-                        friendElement.setup(currentUser, user, friendshipService, messageService, userService);
-
-                        friendElement.AddObserver(this);
-
-                        searchResults.getChildren().add(friend);
-                    } else if (requestsS.contains(user.getID())) {
-                        // Load sent request element
-                        FriendRequestSent friendRequestSent = new FriendRequestSent();
-                        friendRequestSent.setup(currentUser, user, friendshipService);
-
-                        friendRequestSent.AddObserver(this);
-
-                        searchResults.getChildren().add(friendRequestSent);
-                    } else if (requestsR.contains(user.getID())) {
-                        // Load recv request element
-                        FriendRequestReceived friendRequestReceived = new FriendRequestReceived();
-                        friendRequestReceived.setup(currentUser, user, friendshipService);
-
-                        friendRequestReceived.AddObserver(this);
-
-                        searchResults.getChildren().add(friendRequestReceived);
-                    } else {
-                        //Load search element
-                        FriendSearchElement friendSearchElement = new FriendSearchElement();
-                        friendSearchElement.setup(currentUser, user, friendshipService);
-
-                        if (user.getID().equals(currentUser.getID())) {
-                            friendSearchElement.hideButton();
-                        }
-
-                        friendSearchElement.AddObserver(this);
-
-                        searchResults.getChildren().add(friendSearchElement);
-                    }
+                    CreateElement(user);
                 }
 
-//                prevPage.setDisable(!repo.hasPrevPageM());
-//                nextPage.setDisable(!repo.hasNextPageM());
-//                pageNumberSelector.setText(String.valueOf(repo.getPageNumberM() + 1));
+                prevPage.setDisable(!userService.hasPrevPage());
+                nextPage.setDisable(!userService.hasNextPage());
+                pageNumberSelector.setText(String.valueOf(userService.getPageNumber() + 1));
                 root.requestFocus();
             } catch (IOException e) {
+                e.printStackTrace();
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Error");
                 alert.setContentText(e.getMessage());
@@ -311,10 +258,66 @@ public class UserPageController extends Observer {
         }
     }
 
-    public void search() {
-//        repo.setMatcher(name.getText().split(" ")[0]);
+    private void CreateElement(User user) throws IOException {
+        if (friendships.contains(user.getID())) {
+            // Load friend element
+            createFriendElement(user);
+        } else if (requestsS.contains(user.getID())) {
+            // Load sent request element
+            createRequestSentElement(user);
+        } else if (requestsR.contains(user.getID())) {
+            // Load recv request element
+            createRequestReceivedElement(user);
+        } else {
+            //Load search element
+            createSearchElement(user);
+        }
+    }
 
-//        pageCounter.setText("/ " + repo.getPageCountM());
+    private void createSearchElement(User user) {
+        FriendSearchElement friendSearchElement = new FriendSearchElement();
+        friendSearchElement.setup(currentUser, user, friendshipService);
+
+        if (user.getID().equals(currentUser.getID())) {
+            friendSearchElement.hideButton();
+        }
+
+        friendSearchElement.AddObserver(this);
+        searchResults.getChildren().add(friendSearchElement);
+    }
+
+    private void createRequestReceivedElement(User user) {
+        FriendRequestReceived friendRequestReceived = new FriendRequestReceived();
+        friendRequestReceived.setup(currentUser, user, friendshipService);
+
+        friendRequestReceived.AddObserver(this);
+        searchResults.getChildren().add(friendRequestReceived);
+    }
+
+    private void createRequestSentElement(User user) {
+        FriendRequestSent friendRequestSent = new FriendRequestSent();
+        friendRequestSent.setup(currentUser, user, friendshipService);
+
+        friendRequestSent.AddObserver(this);
+        searchResults.getChildren().add(friendRequestSent);
+    }
+
+    private void createFriendElement(User user) {
+        FriendElement friendElement = new FriendElement();
+        friendElement.setup(currentUser, user, friendshipService, messageService, userService);
+
+        friendElement.AddObserver(this);
+        searchResults.getChildren().add(friendElement);
+    }
+
+    public void search() {
+        Map<String, String> matcher = new HashMap<>();
+        matcher.put("firstname", name.getText().split(" ")[0]);
+        matcher.put("lastname", name.getText().split(" ")[0]);
+
+        userService.setMatcher(matcher);
+
+        pageCounter.setText("/ " + userService.getPageCount());
 
         friendships = friendshipService.getUserFriendList(currentUser.getID()).stream()
                 .map(FriendshipDTO::getFriend).collect(Collectors.toList());
@@ -322,28 +325,28 @@ public class UserPageController extends Observer {
         requestsR = friendshipService.getUserReceivedRequests(currentUser.getID());
         requestsS = friendshipService.getUserSentRequests(currentUser.getID());
 
-//        List<User> page = repo.getPageM();
-//        loadPage(page);
+        List<User> page = userService.getFirstPage();
+        loadPage(page);
     }
 
     public void loadPrevPage() {
-//        List<User> page = repo.getPrevPageM();
-//        loadPage(page);
+        List<User> page = userService.getPrevPage();
+        loadPage(page);
     }
 
     public void loadNextPage() {
-//        List<User> page = repo.getNextPageM();
-//        loadPage(page);
+        List<User> page = userService.getNextPage();
+        loadPage(page);
     }
 
     public void loadPage() {
         int pageNumber = Integer.parseInt(pageNumberSelector.getText()) - 1;
-//        if (pageNumber < repo.getPageCount()) {
-//            List<User> page = repo.getPage(pageNumber);
-//            loadPage(page);
-//        } else {
-//            pageNumberSelector.setText(String.valueOf(repo.getPageNumber() + 1));
-//        }
+        if (pageNumber < userService.getPageCount()) {
+            List<User> page = userService.getPage(pageNumber);
+            loadPage(page);
+        } else {
+            pageNumberSelector.setText(String.valueOf(userService.getPageNumber() + 1));
+        }
     }
 
     public void onEnterFirst() {
@@ -351,212 +354,213 @@ public class UserPageController extends Observer {
     }
 
     public void activateCheck() {
-//        friendsPane.setExpanded(true);
-//        friendList.keySet().forEach(k -> k.setCheckVisible(true));
-//        activateCheck.setVisible(false);
-//        createGroup.setVisible(true);
+        friendsPane.setExpanded(true);
+        friends.getChildren().forEach(element -> ((FriendElement)element).setCheckVisible(true));
+        activateCheck.setVisible(false);
+        createGroup.setVisible(true);
     }
 
     public void createGroup() {
-//        List<Long> members = new LinkedList<>();
-//        members.add(currentUser.getID());
-//        friendList.keySet().forEach(k -> {
-//            k.setCheckVisible(false);
-//            if (k.getCheck()) {
-//                members.add(k.friendUser.getID());
-//            }
-//        });
-//        if (members.size() > 2) {
-//            groups.getChildren().add(new Label(members.toString()));
-//        }
-//        System.out.println(members);
-//        activateCheck.setVisible(true);
-//        createGroup.setVisible(false);
+        List<Long> members = new LinkedList<>();
+        members.add(currentUser.getID());
+        friends.getChildren().forEach(k -> {
+            FriendElement e = (FriendElement)k;
+            e.setCheckVisible(false);
+            if (e.getCheck()) {
+                members.add(e.friendUser.getID());
+            }
+        });
+        if (members.size() > 2) {
+            groups.getChildren().add(new Label(members.toString()));
+        }
+        System.out.println(members);
+        activateCheck.setVisible(true);
+        createGroup.setVisible(false);
     }
 
     public void activityReport() throws IOException {
-//        Dialog<Pair<LocalDate, LocalDate>> reportPeriodDialog = new Dialog<>();
-//        reportPeriodDialog.setTitle("Report Period");
-//
-//        ButtonType generateReport = new ButtonType("Generate Report", ButtonBar.ButtonData.OK_DONE);
-//        reportPeriodDialog.getDialogPane().getButtonTypes().addAll(generateReport, ButtonType.CANCEL);
-//
-//        GridPane grid = new GridPane();
-//        grid.setHgap(10);
-//        grid.setVgap(10);
-//        grid.setPadding(new Insets(20, 150, 10, 10));
-//
-//        DatePicker startDate = new DatePicker();
-//        DatePicker endDate = new DatePicker();
-//
-//        grid.add(new Label("Start:"), 0, 0);
-//        grid.add(startDate, 1, 0);
-//        grid.add(new Label("End:"), 0, 1);
-//        grid.add(endDate, 1, 1);
-//
-//
-//        Node generateReportButton = reportPeriodDialog.getDialogPane().lookupButton(generateReport);
-//        generateReportButton.setDisable(true);
-//
-//        // Do some validation (using the Java 8 lambda syntax).
-//        startDate.valueProperty().addListener((observable, oldValue, newValue) -> generateReportButton.setDisable(startDate.getValue() == null || endDate.getValue() == null));
-//        endDate.valueProperty().addListener((observable, oldValue, newValue) -> generateReportButton.setDisable(startDate.getValue() == null || endDate.getValue() == null));
-//
-//        reportPeriodDialog.getDialogPane().setContent(grid);
-//
-//        reportPeriodDialog.setResultConverter(dialogButton -> {
-//            if (dialogButton == generateReport) {
-//                return new Pair<>(startDate.getValue(), endDate.getValue());
-//            }
-//            return null;
-//        });
-//
-//        Optional<Pair<LocalDate, LocalDate>> result = reportPeriodDialog.showAndWait();
-//
-//        LocalDate start;
-//        LocalDate end;
-//
-//        if (result.isPresent()) {
-//            start = result.get().getKey();
-//            end = result.get().getValue();
-//
-//            if (start.compareTo(end) >= 0) {
-//                Alert alert = new Alert(Alert.AlertType.ERROR);
-//                alert.setTitle("Error Dialog");
-//                alert.setHeaderText("Invalid date");
-//                alert.setContentText("The dates you selected are invalid");
-//
-//                alert.showAndWait();
-//                return;
-//            }
-//
-//            //Report Code
-//            FXMLLoader loader = new FXMLLoader();
-//            loader.setLocation(getClass().getResource("/view/activityReportView.fxml"));
-//            AnchorPane root = loader.load();
-//
-//
-//            ActivityReportController controller = loader.getController();
-//            controller.setup(messageService, userService, friendshipService, currentUser, start, end);
-//
-//            // New window (Stage)
-//            Stage reportWindow = new Stage();
-//            reportWindow.setScene(new Scene(root, 300, 500));
-//            reportWindow.setMinWidth(500);
-//            reportWindow.setMinHeight(300);
-//            reportWindow.setTitle("Activity Report Window");
-//
-//            Platform.runLater(controller::load);
-//
-//            // Set position of second window, related to primary window.
-//            reportWindow.setX(200);
-//            reportWindow.setY(200);
-//
-//            reportWindow.show();
-//        }
+        Dialog<Pair<LocalDate, LocalDate>> reportPeriodDialog = new Dialog<>();
+        reportPeriodDialog.setTitle("Report Period");
+
+        ButtonType generateReport = new ButtonType("Generate Report", ButtonBar.ButtonData.OK_DONE);
+        reportPeriodDialog.getDialogPane().getButtonTypes().addAll(generateReport, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        DatePicker startDate = new DatePicker();
+        DatePicker endDate = new DatePicker();
+
+        grid.add(new Label("Start:"), 0, 0);
+        grid.add(startDate, 1, 0);
+        grid.add(new Label("End:"), 0, 1);
+        grid.add(endDate, 1, 1);
+
+
+        Node generateReportButton = reportPeriodDialog.getDialogPane().lookupButton(generateReport);
+        generateReportButton.setDisable(true);
+
+        // Do some validation (using the Java 8 lambda syntax).
+        startDate.valueProperty().addListener((observable, oldValue, newValue) -> generateReportButton.setDisable(startDate.getValue() == null || endDate.getValue() == null));
+        endDate.valueProperty().addListener((observable, oldValue, newValue) -> generateReportButton.setDisable(startDate.getValue() == null || endDate.getValue() == null));
+
+        reportPeriodDialog.getDialogPane().setContent(grid);
+
+        reportPeriodDialog.setResultConverter(dialogButton -> {
+            if (dialogButton == generateReport) {
+                return new Pair<>(startDate.getValue(), endDate.getValue());
+            }
+            return null;
+        });
+
+        Optional<Pair<LocalDate, LocalDate>> result = reportPeriodDialog.showAndWait();
+
+        LocalDate start;
+        LocalDate end;
+
+        if (result.isPresent()) {
+            start = result.get().getKey();
+            end = result.get().getValue();
+
+            if (start.compareTo(end) >= 0) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error Dialog");
+                alert.setHeaderText("Invalid date");
+                alert.setContentText("The dates you selected are invalid");
+
+                alert.showAndWait();
+                return;
+            }
+
+            //Report Code
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(getClass().getResource("/view/activityReportView.fxml"));
+            AnchorPane root = loader.load();
+
+
+            ActivityReportController controller = loader.getController();
+            controller.setup(messageService, userService, friendshipService, currentUser, start, end);
+
+            // New window (Stage)
+            Stage reportWindow = new Stage();
+            reportWindow.setScene(new Scene(root, 300, 500));
+            reportWindow.setMinWidth(500);
+            reportWindow.setMinHeight(300);
+            reportWindow.setTitle("Activity Report Window");
+
+            Platform.runLater(controller::load);
+
+            // Set position of second window, related to primary window.
+            reportWindow.setX(200);
+            reportWindow.setY(200);
+
+            reportWindow.show();
+        }
     }
 
     public void messageReport() throws IOException {
-//        Dialog<Triplet<LocalDate, LocalDate, String>> reportPeriodDialog = new Dialog<>();
-//        reportPeriodDialog.setTitle("Configure Report");
-//
-//        ButtonType generateReport = new ButtonType("Generate Report", ButtonBar.ButtonData.OK_DONE);
-//        reportPeriodDialog.getDialogPane().getButtonTypes().addAll(generateReport, ButtonType.CANCEL);
-//
-//        GridPane grid = new GridPane();
-//        grid.setHgap(10);
-//        grid.setVgap(10);
-//        grid.setPadding(new Insets(20, 150, 10, 10));
-//
-//        DatePicker startDate = new DatePicker();
-//        DatePicker endDate = new DatePicker();
-//        ComboBox<String> friend = new ComboBox<>();
-//
-//        friend.setPromptText("Friend...");
-//        for (FriendshipDTO f : friendshipService.getUserFriendList(currentUser.getID())) {
-//            friend.getItems().add(userService.GetOne(f.getFriend()).getEmail());
-//        }
-//
-//        grid.add(new Label("Start:"), 0, 0);
-//        grid.add(startDate, 1, 0);
-//        grid.add(new Label("End:"), 0, 1);
-//        grid.add(endDate, 1, 1);
-//        grid.add(new Label("Friend:"), 0, 2);
-//        grid.add(friend, 1, 2);
-//
-//
-//        Node generateReportButton = reportPeriodDialog.getDialogPane().lookupButton(generateReport);
-//        generateReportButton.setDisable(true);
-//
-//        // Do some validation (using the Java 8 lambda syntax).
-//        startDate.valueProperty()
-//                .addListener((observable, oldValue, newValue) -> generateReportButton.setDisable(startDate.getValue() == null
-//                        || endDate.getValue() == null || friend.getValue() == null));
-//
-//        endDate.valueProperty()
-//                .addListener((observable, oldValue, newValue) -> generateReportButton.setDisable(startDate.getValue() == null
-//                        || endDate.getValue() == null || friend.getValue() == null));
-//
-//        friend.valueProperty()
-//                .addListener(observable -> generateReportButton.setDisable(startDate.getValue() == null
-//                        || endDate.getValue() == null || friend.getValue() == null));
-//
-//        reportPeriodDialog.getDialogPane().setContent(grid);
-//
-//        reportPeriodDialog.setResultConverter(dialogButton -> {
-//            if (dialogButton == generateReport) {
-//                return new Triplet<>(startDate.getValue(), endDate.getValue(), friend.getValue());
-//            }
-//            return null;
-//        });
-//
-//        Optional<Triplet<LocalDate, LocalDate, String>> result = reportPeriodDialog.showAndWait();
-//
-//        LocalDate start;
-//        LocalDate end;
-//        User friendTarget;
-//
-//        if (result.isPresent()) {
-//            start = result.get().e1;
-//            end = result.get().e2;
-//            friendTarget = userService.FindUserByEmail(result.get().e3);
-//
-//            System.out.println(friendTarget.getEmail());
-//
-//            if (start.compareTo(end) >= 0) {
-//                Alert alert = new Alert(Alert.AlertType.ERROR);
-//                alert.setTitle("Error Dialog");
-//                alert.setHeaderText("Invalid date");
-//                alert.setContentText("The dates you selected are invalid");
-//
-//                alert.showAndWait();
-//                return;
-//            }
-//
-//            //Report Code
-//            FXMLLoader loader = new FXMLLoader();
-//            loader.setLocation(getClass().getResource("/view/messageReportView.fxml"));
-//            AnchorPane root = loader.load();
-//
-//
-//            MessageReportController controller = loader.getController();
-//            controller.setup(messageService, userService, friendshipService, currentUser, start, end, friendTarget);
-//
-//            // New window (Stage)
-//            Stage reportWindow = new Stage();
-//            reportWindow.setScene(new Scene(root, 300, 500));
-//            reportWindow.setMinWidth(500);
-//            reportWindow.setMinHeight(300);
-//            reportWindow.setTitle("Message Report Window");
-//
-//            Platform.runLater(controller::load);
-//
-//            // Set position of second window, related to primary window.
-//            reportWindow.setX(200);
-//            reportWindow.setY(200);
-//
-//            reportWindow.show();
-//        }
+        Dialog<Triplet<LocalDate, LocalDate, String>> reportPeriodDialog = new Dialog<>();
+        reportPeriodDialog.setTitle("Configure Report");
+
+        ButtonType generateReport = new ButtonType("Generate Report", ButtonBar.ButtonData.OK_DONE);
+        reportPeriodDialog.getDialogPane().getButtonTypes().addAll(generateReport, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        DatePicker startDate = new DatePicker();
+        DatePicker endDate = new DatePicker();
+        ComboBox<String> friend = new ComboBox<>();
+
+        friend.setPromptText("Friend...");
+        for (FriendshipDTO f : friendshipService.getUserFriendList(currentUser.getID())) {
+            friend.getItems().add(userService.GetOne(f.getFriend()).getEmail());
+        }
+
+        grid.add(new Label("Start:"), 0, 0);
+        grid.add(startDate, 1, 0);
+        grid.add(new Label("End:"), 0, 1);
+        grid.add(endDate, 1, 1);
+        grid.add(new Label("Friend:"), 0, 2);
+        grid.add(friend, 1, 2);
+
+
+        Node generateReportButton = reportPeriodDialog.getDialogPane().lookupButton(generateReport);
+        generateReportButton.setDisable(true);
+
+        // Do some validation (using the Java 8 lambda syntax).
+        startDate.valueProperty()
+                .addListener((observable, oldValue, newValue) -> generateReportButton.setDisable(startDate.getValue() == null
+                        || endDate.getValue() == null || friend.getValue() == null));
+
+        endDate.valueProperty()
+                .addListener((observable, oldValue, newValue) -> generateReportButton.setDisable(startDate.getValue() == null
+                        || endDate.getValue() == null || friend.getValue() == null));
+
+        friend.valueProperty()
+                .addListener(observable -> generateReportButton.setDisable(startDate.getValue() == null
+                        || endDate.getValue() == null || friend.getValue() == null));
+
+        reportPeriodDialog.getDialogPane().setContent(grid);
+
+        reportPeriodDialog.setResultConverter(dialogButton -> {
+            if (dialogButton == generateReport) {
+                return new Triplet<>(startDate.getValue(), endDate.getValue(), friend.getValue());
+            }
+            return null;
+        });
+
+        Optional<Triplet<LocalDate, LocalDate, String>> result = reportPeriodDialog.showAndWait();
+
+        LocalDate start;
+        LocalDate end;
+        User friendTarget;
+
+        if (result.isPresent()) {
+            start = result.get().e1;
+            end = result.get().e2;
+            friendTarget = userService.FindUserByEmail(result.get().e3);
+
+            System.out.println(friendTarget.getEmail());
+
+            if (start.compareTo(end) >= 0) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error Dialog");
+                alert.setHeaderText("Invalid date");
+                alert.setContentText("The dates you selected are invalid");
+
+                alert.showAndWait();
+                return;
+            }
+
+            //Report Code
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(getClass().getResource("/view/messageReportView.fxml"));
+            AnchorPane root = loader.load();
+
+
+            MessageReportController controller = loader.getController();
+            controller.setup(messageService, userService, friendshipService, currentUser, start, end, friendTarget);
+
+            // New window (Stage)
+            Stage reportWindow = new Stage();
+            reportWindow.setScene(new Scene(root, 300, 500));
+            reportWindow.setMinWidth(500);
+            reportWindow.setMinHeight(300);
+            reportWindow.setTitle("Message Report Window");
+
+            Platform.runLater(controller::load);
+
+            // Set position of second window, related to primary window.
+            reportWindow.setX(200);
+            reportWindow.setY(200);
+
+            reportWindow.show();
+        }
     }
 
     public void createEvent() {
@@ -620,7 +624,8 @@ public class UserPageController extends Observer {
 
             UserEvent newEvent = new UserEvent(currentUser.getID(), date, name);
             eventService.save(newEvent);
-            loadEvents(eventService.getPage(eventService.getPageNumber()));
+            List<UserEvent> page = eventService.getPage(eventService.getPageNumber());
+            loadEvents(page);
         }
     }
 
@@ -637,7 +642,7 @@ public class UserPageController extends Observer {
             if (event.getEventDate().compareTo(LocalDate.now()) >= 0) {
                 try {
                     EventElement eventElement = new EventElement();
-                    eventElement.setUp(event, currentUser);
+                    eventElement.setup(event, currentUser, eventService);
                     eventElement.AddObserver(this);
                     eventsBox.getChildren().add(eventElement);
                 } catch (RuntimeException e) {
@@ -680,7 +685,9 @@ public class UserPageController extends Observer {
                     }
                 }
             }
-            temp = eventService.getNextPage();
+            if(eventService.hasNextPage()) {
+                temp = eventService.getNextPage();
+            }
         } while (eventService.hasNextPage());
 
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -700,7 +707,7 @@ public class UserPageController extends Observer {
         alert.showAndWait();
     }
 
-    private class Triplet<T1, T2, T3> {
+    private static class Triplet<T1, T2, T3> {
         public T1 e1;
         public T2 e2;
         public T3 e3;

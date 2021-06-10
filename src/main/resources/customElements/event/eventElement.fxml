@@ -3,9 +3,9 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.*?>
+
 <fx:root type="javafx.scene.layout.AnchorPane" prefHeight="35.0" prefWidth="338.0"
-         xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1"
-         stylesheets="/stylesheets/elements.css">
+         xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
     <Button fx:id="sub" layoutX="168.0" layoutY="4.0" mnemonicParsing="false" onAction="#subscribe"
             text="I'm going" AnchorPane.rightAnchor="10"/>
     <Button fx:id="unsub" layoutX="168.0" layoutY="4.0" mnemonicParsing="false" onAction="#unsubscribe"

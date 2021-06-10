@@ -165,7 +165,7 @@ public class EventDB implements IEventRepository {
         int temp;
 
         int pageSize = paginationInfo.getPageSize();
-        if(pageSize > 1) {
+        if(pageSize < 1) {
             throw new RepoException("Invalid pageSize or pageNumber");
         }
 
@@ -249,10 +249,11 @@ public class EventDB implements IEventRepository {
                 insert.setBoolean(3, entry.getValue());
                 insert.execute();
             }
+            return entity;
         } catch (SQLException throwable) {
             //System.out.println(throwable.getMessage());
+            return null;
         }
-        return null;
     }
 
     @Override

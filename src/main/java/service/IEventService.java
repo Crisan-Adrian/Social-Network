@@ -1,5 +1,6 @@
 package service;
 
+import domain.User;
 import domain.UserEvent;
 
 import java.util.List;
@@ -15,23 +16,18 @@ public interface IEventService {
     List<UserEvent> getFirstPage();
 
     /**
-     * Gets page of current number and moves cursor to it
+     * Gets page of given number and moves cursor to it
      * @param pageNumber the page number
      * @return the page of events
      * @throws exceptions.ServiceException if page number is invalid or paging information is not set
      */
     List<UserEvent> getPage(int pageNumber);
 
-    /**
-     * Gets the number of pages available
-     *
-     * @return the number of pages
-     * @throws exceptions.ServiceException if paging information is not set
-     */
+
     int getPageCount();
 
     /**
-     * Checks is there exits a page after current page
+     * Checks if there is a page after current page
      *
      * @return
      * true - if a next page exists
@@ -41,7 +37,7 @@ public interface IEventService {
     boolean hasPrevPage();
 
     /**
-     * Checks is there exits a page before current page
+     * Checks if there is a page before current page
      *
      * @return
      * true - if a previous page exists
@@ -75,4 +71,22 @@ public interface IEventService {
      * @param newEvent the event to save
      */
     void save(UserEvent newEvent);
+
+    /**
+     * Changes the notification preferences for an event for the given user
+     * @param user the user to update preferences of
+     * @param event the event to update
+     * @param isNotified the new notification preferences
+     * @return the updated event
+     */
+    UserEvent changeNotificationState(User user, UserEvent event, boolean isNotified);
+
+    /**
+     * Changes the attendance for an event for the given user
+     * @param user the user to update attendance of
+     * @param event the event to update
+     * @param isAttending the new attendance status
+     * @return the updated event
+     */
+    UserEvent changeAttendance(User user, UserEvent event, boolean isAttending);
 }

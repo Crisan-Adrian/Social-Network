@@ -15,25 +15,26 @@ import service.IUserService;
 import util.Hasher;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public class MainPageController {
 
-    //TODO: Comment code where necessary. Document functions. Refactor if needed
-
-
-    public PasswordField signupPassword;
-    public TextField signupFirstName;
-    public TextField signupLastName;
-    public TextField signupEmail;
-    public SplitPane split;
     @FXML
-    Button loginButton;
-
+    private PasswordField signupPassword;
     @FXML
-    TextField userEmail;
-
+    private TextField signupFirstName;
     @FXML
-    PasswordField password;
+    private TextField signupLastName;
+    @FXML
+    private TextField signupEmail;
+    @FXML
+    private SplitPane split;
+    @FXML
+    private Button loginButton;
+    @FXML
+    private TextField userEmail;
+    @FXML
+    private PasswordField password;
 
     private IUserService userService;
     private IFriendshipService friendshipService;
@@ -67,7 +68,16 @@ public class MainPageController {
         } else {
             User loginUser = userService.FindUserByEmail(userEmail.getText());
             if (loginUser != null) {
-                if (Hasher.encodePassword(password.getText(), loginUser.getSalt()).equals(loginUser.getPassword())) {
+                String encodedPassword = Hasher.encodePassword(password.getText(), loginUser.getSalt());
+                if(encodedPassword == null)
+                {
+                    Alert alert = new Alert(Alert.AlertType.WARNING);
+                    alert.setTitle("Error");
+                    alert.setContentText("Error retrieving login data");
+
+                    alert.showAndWait();
+                }
+                else if (encodedPassword.equals(loginUser.getPassword())) {
                     enterAccount(loginUser);
                 } else {
                     Alert alert = new Alert(Alert.AlertType.WARNING);
@@ -90,14 +100,12 @@ public class MainPageController {
         } else {
             Tuple<String, String> hashed = Hasher.encodePassword(signupPassword.getText());
             User user = new User(signupFirstName.getText(), signupLastName.getText(), signupEmail.getText(), hashed.getRight(), hashed.getLeft());
-//            user.setID(userService.getNextID());
-            if(userService.AddUser(user) == null)
+            if(userService.AddUser(user).getID() != null)
             {
                 enterAccount(user);
             }
             else
             {
-
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Error");
                 alert.setContentText("User email already registered!");
@@ -111,7 +119,7 @@ public class MainPageController {
         try {
             Stage stage = (Stage) loginButton.getScene().getWindow();
             FXMLLoader loader = new FXMLLoader();
-            loader.setLocation(getClass().getResource("/view/userPageView2.fxml"));
+            loader.setLocation(getClass().getResource("/view/userPageView.fxml"));
             AnchorPane root = loader.load();
 
             UserPageController userPageController = loader.getController();
@@ -127,6 +135,7 @@ public class MainPageController {
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Error");
             alert.setContentText(e.getLocalizedMessage());
+            System.out.println(e.getLocalizedMessage());
 
             alert.showAndWait();
         }

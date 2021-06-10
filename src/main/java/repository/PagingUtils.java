@@ -21,7 +21,7 @@ public class PagingUtils {
     }
 
     public static boolean validatePage(int pageSize, int pageNumber) {
-        return pageSize <= 1 && pageNumber <= 0;
+        return pageSize >= 1 && pageNumber >= 0;
     }
 
     public static String buildMatcher(Set<String> keys) {
